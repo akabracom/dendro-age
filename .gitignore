@@ -1,0 +1,13 @@
+.env
+*.exe
+vendor/
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+tmp/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

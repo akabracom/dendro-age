@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аномальные паттерны</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="phone">
+    <main class="mosaic">
+        <h1 class="page-title">Аномальные паттерны</h1>
+        <form class="filter" method="get" action="/dendro_scale_patterns">
+            <div class="filter__pill">
+                <span class="filter__caption">С</span>
+                <input class="filter__year" type="number" name="year_from" min="1" max="2100" placeholder="год" value="{{ .YearFrom }}">
+                <span class="filter__caption">по</span>
+                <input class="filter__year" type="number" name="year_to" min="1" max="2100" placeholder="год" value="{{ .YearTo }}">
+                <button class="filter__submit" type="submit">Найти</button>
+            </div>
+        </form>
+        <section class="mosaic__grid">
+            {{ range .DendroScalePatterns }}
+            <a class="card" href="/dendro_scale_patterns/feed/{{ .ID }}">
+                <img class="card__image" src="{{ .ImageURL }}" alt="{{ .Title }}">
+                <div class="card__shade">
+                    <h2 class="card__title">{{ .Title }}</h2>
+                    <p class="card__meta"><span class="card__heart"></span> {{ .LikeCount }} · {{ .EventYear }}</p>
+                </div>
+            </a>
+            {{ else }}
+            <p class="mosaic__empty">Нет паттернов за выбранные годы.</p>
+            {{ end }}
+        </section>
+    </main>
+    {{ template "tabbar" . }}
+</div>
+</body>
+</html>

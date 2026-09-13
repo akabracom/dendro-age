@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .DendroScalePattern.Title }} — лента</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="phone phone--feed">
+    <main class="feed">
+        <video class="feed__video" src="{{ .DendroScalePattern.VideoURL }}" poster="{{ .DendroScalePattern.ImageURL }}" autoplay muted loop playsinline></video>
+        <div class="feed__overlay">
+            <p class="feed__logo">Dendro Age</p>
+            <aside class="feed__rail">
+                <div class="feed__stat">
+                    <span class="feed__stat-label">Год начала</span>
+                    <span class="feed__stat-value">{{ .DendroScalePattern.EventYear }}</span>
+                </div>
+                <div class="feed__stat">
+                    <span class="feed__stat-label">Кольца</span>
+                    <span class="feed__stat-value">{{ .DendroScalePattern.RingCount }}</span>
+                </div>
+                <div class="feed__icon-block">
+                    <span class="feed__heart" aria-hidden="true"></span>
+                    <span>{{ .DendroScalePattern.LikeCount }}</span>
+                </div>
+                <a class="feed__next" href="/dendro_scale_patterns/feed/{{ .DendroScalePattern.ID }}?next=true">Следующий</a>
+            </aside>
+            <div class="feed__bottom">
+                <h1 class="feed__title">{{ .DendroScalePattern.Title }}</h1>
+                <p class="feed__short">{{ .DendroScalePattern.ShortDescription }}</p>
+                <details class="feed__more">
+                    <summary>Подробнее</summary>
+                    <p>{{ .DendroScalePattern.FullDescription }}</p>
+                </details>
+            </div>
+        </div>
+    </main>
+    {{ template "tabbar" . }}
+</div>
+</body>
+</html>

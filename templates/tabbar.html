@@ -1,0 +1,15 @@
+{{define "tabbar"}}
+<nav class="tabbar">
+    <a class="tabbar__item {{if eq .ActiveTab "feed"}}is-active{{end}}" href="/dendro_scale_patterns/feed">
+        <span class="tabbar__dot"></span>
+        Лента
+    </a>
+    <a class="tabbar__item {{if eq .ActiveTab "draft"}}is-active{{end}}" href="/dendro_scale_patterns/draft">
+        + Добавить
+    </a>
+    <a class="tabbar__item {{if eq .ActiveTab "mosaic"}}is-active{{end}}" href="/dendro_scale_patterns">
+        <span class="tabbar__grid" aria-hidden="true"></span>
+        Плитка
+    </a>
+</nav>
+{{end}}
