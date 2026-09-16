@@ -451,3 +451,34 @@ textarea {
     grid-template-columns: 1fr 1fr;
     gap: 16px;
 }
+
+.card-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.card-delete {
+    margin: 0;
+}
+
+.card-delete__btn {
+    width: 100%;
+    border: 0;
+    border-radius: 14px;
+    background: var(--color-green);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.card-delete__btn:hover {
+    background: var(--color-green-hover);
+}
+
+.draft__submit {
+    width: 100%;
+    margin-top: 8px;
+}

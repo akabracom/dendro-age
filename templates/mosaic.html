@@ -24,13 +24,18 @@
         </form>
         <section class="mosaic__grid">
             {{ range .DendroScalePatterns }}
-            <a class="card" href="/dendro_scale_patterns/feed/{{ .ID }}">
-                <img class="card__image" src="{{ .ImageURL }}" alt="{{ .Title }}">
-                <div class="card__shade">
-                    <h2 class="card__title">{{ .Title }}</h2>
-                    <p class="card__meta"><span class="card__heart"></span> {{ .LikeCount }} · {{ .EventYear }}</p>
-                </div>
-            </a>
+            <article class="card-wrap">
+                <a class="card" href="/dendro_scale_patterns/feed/{{ .ID }}">
+                    <img class="card__image" src="{{ .ImageSrc }}" alt="{{ .Title }}">
+                    <div class="card__shade">
+                        <h2 class="card__title">{{ .Title }}</h2>
+                        <p class="card__meta"><span class="card__heart"></span> {{ .LikeCount }} · {{ .EventYear }}</p>
+                    </div>
+                </a>
+                <form class="card-delete" method="post" action="/dendro_scale_patterns/{{ .ID }}/remove">
+                    <button class="card-delete__btn" type="submit">Удалить</button>
+                </form>
+            </article>
             {{ else }}
             <p class="mosaic__empty">Нет паттернов за выбранные годы.</p>
             {{ end }}

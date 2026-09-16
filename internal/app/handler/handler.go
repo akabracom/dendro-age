@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"dendro-age/internal/app/ds"
 	"dendro-age/internal/app/repository"
 
 	"github.com/gin-gonic/gin"
@@ -20,21 +21,25 @@ func NewHandler(r *repository.Repository) *Handler {
 }
 
 type patternView struct {
-	repository.DendroScalePattern
+	ds.DendroScalePattern
 	LikeCount int
+	ImageSrc  string
+	VideoSrc  string
 }
 
-func toView(pattern repository.DendroScalePattern) patternView {
+func (h *Handler) toView(pattern ds.DendroScalePattern) patternView {
 	return patternView{
 		DendroScalePattern: pattern,
-		LikeCount:          len(pattern.LikeUserIDs),
+		LikeCount:          h.Repository.CountLikes(pattern.ID),
+		ImageSrc:           repository.ResolveMedia(pattern.ImageURL, repository.DefaultImagePath),
+		VideoSrc:           repository.ResolveMedia(pattern.VideoURL, repository.DefaultVideoPath),
 	}
 }
 
-func toViews(patterns []repository.DendroScalePattern) []patternView {
+func (h *Handler) toViews(patterns []ds.DendroScalePattern) []patternView {
 	views := make([]patternView, 0, len(patterns))
 	for _, pattern := range patterns {
-		views = append(views, toView(pattern))
+		views = append(views, h.toView(pattern))
 	}
 	return views
 }
@@ -52,16 +57,33 @@ func parseYear(raw string) *int {
 	return &year
 }
 
+func (h *Handler) currentCreatorID() (uint, error) {
+	researcher, err := h.Repository.CurrentResearcher()
+	if err != nil {
+		return 0, err
+	}
+	return researcher.ID, nil
+}
+
+func (h *Handler) renderNotFound(ctx *gin.Context) {
+	ctx.HTML(http.StatusNotFound, "not_found.html", gin.H{
+		"ActiveTab":   "feed",
+		"RequestPath": ctx.Request.URL.Path,
+	})
+}
+
 func (h *Handler) GetDendroScalePatterns(ctx *gin.Context) {
 	yearFromRaw := ctx.Query("year_from")
 	yearToRaw := ctx.Query("year_to")
-	yearFrom := parseYear(yearFromRaw)
-	yearTo := parseYear(yearToRaw)
-
-	patterns := h.Repository.ListPublished(yearFrom, yearTo)
+	patterns, err := h.Repository.ListPublished(parseYear(yearFromRaw), parseYear(yearToRaw))
+	if err != nil {
+		log.Println(err)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
 	ctx.HTML(http.StatusOK, "mosaic.html", gin.H{
 		"ActiveTab":           "mosaic",
-		"DendroScalePatterns": toViews(patterns),
+		"DendroScalePatterns": h.toViews(patterns),
 		"YearFrom":            yearFromRaw,
 		"YearTo":              yearToRaw,
 	})
@@ -72,48 +94,109 @@ func (h *Handler) GetDendroScalePatternsFeed(ctx *gin.Context) {
 	next := ctx.Query("next") == "true"
 
 	var (
-		pattern repository.DendroScalePattern
+		pattern ds.DendroScalePattern
 		err     error
 	)
 
 	if idStr == "" {
 		pattern, err = h.Repository.GetFirstPublished()
 	} else {
-		id, convErr := strconv.Atoi(idStr)
+		id64, convErr := strconv.ParseUint(idStr, 10, 64)
 		if convErr != nil {
-			log.Println("некорректный id паттерна:", convErr)
-			ctx.Status(http.StatusBadRequest)
+			h.renderNotFound(ctx)
 			return
 		}
+		id := uint(id64)
 		if next {
 			pattern, err = h.Repository.GetNextPublished(id)
 		} else {
 			pattern, err = h.Repository.GetPublishedByID(id)
 		}
 	}
-
 	if err != nil {
 		log.Println(err)
-		ctx.Status(http.StatusNotFound)
+		h.renderNotFound(ctx)
 		return
 	}
 
 	ctx.HTML(http.StatusOK, "feed.html", gin.H{
-		"ActiveTab":         "feed",
-		"DendroScalePattern": toView(pattern),
+		"ActiveTab":          "feed",
+		"DendroScalePattern": h.toView(pattern),
 	})
 }
 
 func (h *Handler) GetDendroScalePatternsDraft(ctx *gin.Context) {
-	pattern, err := h.Repository.GetDraft()
+	creatorID, err := h.currentCreatorID()
 	if err != nil {
 		log.Println(err)
-		ctx.Status(http.StatusNotFound)
+		ctx.Status(http.StatusInternalServerError)
 		return
 	}
-
+	pattern, err := h.Repository.GetDraftByCreator(creatorID)
+	hasDraft := err == nil
+	view := patternView{
+		ImageSrc: repository.DefaultImagePath,
+		VideoSrc: repository.DefaultVideoPath,
+	}
+	if hasDraft {
+		view = h.toView(pattern)
+	}
 	ctx.HTML(http.StatusOK, "draft.html", gin.H{
 		"ActiveTab":          "draft",
-		"DendroScalePattern": toView(pattern),
+		"HasDraft":           hasDraft,
+		"DendroScalePattern": view,
 	})
+}
+
+func (h *Handler) PostDendroScalePatternNext(ctx *gin.Context) {
+	creatorID, err := h.currentCreatorID()
+	if err != nil {
+		log.Println(err)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+	title := strings.TrimSpace(ctx.PostForm("title"))
+	if title == "" {
+		ctx.Redirect(http.StatusSeeOther, "/dendro_scale_patterns/draft")
+		return
+	}
+	if _, err := h.Repository.CreateDraft(creatorID, title); err != nil {
+		log.Println(err)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+	ctx.Redirect(http.StatusSeeOther, "/dendro_scale_patterns/draft")
+}
+
+func (h *Handler) PostDendroScalePatternPublish(ctx *gin.Context) {
+	creatorID, err := h.currentCreatorID()
+	if err != nil {
+		log.Println(err)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+	shortDescription := strings.TrimSpace(ctx.PostForm("short_description"))
+	fullDescription := strings.TrimSpace(ctx.PostForm("full_description"))
+	eventYear, _ := strconv.Atoi(ctx.PostForm("event_year"))
+	ringCount, _ := strconv.Atoi(ctx.PostForm("ring_count"))
+	if _, err := h.Repository.PublishDraft(creatorID, shortDescription, fullDescription, eventYear, ringCount); err != nil {
+		log.Println(err)
+		ctx.Redirect(http.StatusSeeOther, "/dendro_scale_patterns/draft")
+		return
+	}
+	ctx.Redirect(http.StatusSeeOther, "/dendro_scale_patterns")
+}
+
+func (h *Handler) PostDendroScalePatternDelete(ctx *gin.Context) {
+	id64, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+	if err := h.Repository.SoftDeletePattern(uint(id64)); err != nil {
+		log.Println(err)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+	ctx.Redirect(http.StatusSeeOther, "/dendro_scale_patterns")
 }

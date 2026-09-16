@@ -14,5 +14,26 @@ services:
     volumes:
       - minio_data:/data
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: dendro-age-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer:latest
+    container_name: dendro-age-adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+
 volumes:
   minio_data:
+  postgres_data:

@@ -13,20 +13,21 @@
 <div class="phone">
     <main class="draft">
         <h1 class="page-title">Черновик паттерна</h1>
-        <p class="page-sub">Заполните данные без сохранения</p>
-        <form class="draft__form" action="/dendro_scale_patterns/draft" method="get">
+        {{ if .HasDraft }}
+        <p class="page-sub">Заполните поля по теме и опубликуйте</p>
+        <form class="draft__form" action="/dendro_scale_patterns/draft/publish" method="post">
             <label class="media-block media-block--video">
                 <span class="media-block__caption">Видео паттерна</span>
-                <input class="media-block__input" type="file" name="video" accept="video/*" lang="en">
+                <input class="media-block__input" type="file" accept="video/*" lang="en">
             </label>
-            <label class="media-block media-block--image" style="background-image: url('{{ .DendroScalePattern.ImageURL }}')">
+            <label class="media-block media-block--image js-draft-image" style="background-image: url('{{ .DendroScalePattern.ImageSrc }}')">
                 <span class="media-block__caption media-block__caption--on-photo">Изображение</span>
-                <input class="media-block__input media-block__input--on-photo" type="file" name="image" accept="image/*" lang="en">
+                <input class="media-block__input media-block__input--on-photo js-draft-image-input" type="file" accept="image/*" lang="en">
             </label>
             <div class="fields-card">
-                <label class="fields-card__label">Название
-                    <input class="fields-card__input" type="text" name="title" value="{{ .DendroScalePattern.Title }}">
-                </label>
+                <p class="fields-card__label">Название
+                    <span class="fields-card__input">{{ .DendroScalePattern.Title }}</span>
+                </p>
                 <div class="fields-card__row">
                     <label class="fields-card__label">Год начала
                         <input class="fields-card__input" type="number" name="event_year" value="{{ .DendroScalePattern.EventYear }}">
@@ -41,10 +42,46 @@
                 <label class="fields-card__label">Описание
                     <textarea class="fields-card__input" name="full_description" rows="4">{{ .DendroScalePattern.FullDescription }}</textarea>
                 </label>
+                <button class="filter__submit draft__submit" type="submit">Опубликовать</button>
             </div>
         </form>
+        {{ else }}
+        <p class="page-sub">Укажите название, фото и видео, затем нажмите Далее</p>
+        <form class="draft__form" action="/dendro_scale_patterns/draft/next" method="post">
+            <label class="media-block media-block--video">
+                <span class="media-block__caption">Видео паттерна</span>
+                <input class="media-block__input" type="file" accept="video/*" lang="en">
+            </label>
+            <label class="media-block media-block--image js-draft-image" style="background-image: url('{{ .DendroScalePattern.ImageSrc }}')">
+                <span class="media-block__caption media-block__caption--on-photo">Изображение</span>
+                <input class="media-block__input media-block__input--on-photo js-draft-image-input" type="file" accept="image/*" lang="en">
+            </label>
+            <div class="fields-card">
+                <label class="fields-card__label">Название
+                    <input class="fields-card__input" type="text" name="title" required>
+                </label>
+                <button class="filter__submit draft__submit" type="submit">Далее</button>
+            </div>
+        </form>
+        {{ end }}
     </main>
     {{ template "tabbar" . }}
 </div>
+<script>
+    (function () {
+        var input = document.querySelector(".js-draft-image-input");
+        var box = document.querySelector(".js-draft-image");
+        if (!input || !box) {
+            return;
+        }
+        input.addEventListener("change", function () {
+            var file = input.files && input.files[0];
+            if (!file) {
+                return;
+            }
+            box.style.backgroundImage = "url('" + URL.createObjectURL(file) + "')";
+        });
+    })();
+</script>
 </body>
 </html>
