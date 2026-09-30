@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 
+	"dendro-age/internal/app/apihandler"
 	"dendro-age/internal/app/config"
 	"dendro-age/internal/app/dsn"
 	"dendro-age/internal/app/handler"
+	"dendro-age/internal/app/miniofile"
 	"dendro-age/internal/app/repository"
 
 	"github.com/gin-gonic/gin"
@@ -28,7 +30,13 @@ func StartServer() {
 		log.Fatal(err)
 	}
 
+	minioClient, err := miniofile.NewFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	h := handler.NewHandler(repo)
+	api := apihandler.New(repo, minioClient)
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./static")
@@ -44,6 +52,22 @@ func StartServer() {
 	r.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusFound, "/dendro_scale_patterns/feed")
 	})
+
+	apiGroup := r.Group("/api")
+	{
+		apiGroup.GET("/dendro_scale_patterns", api.ListPatterns)
+		apiGroup.GET("/dendro_scale_patterns/feed", api.GetFeed)
+		apiGroup.GET("/dendro_scale_patterns/feed/:id", api.GetFeed)
+		apiGroup.GET("/dendro_scale_patterns/draft", api.GetDraft)
+		apiGroup.POST("/dendro_scale_patterns", api.CreatePattern)
+		apiGroup.PUT("/dendro_scale_patterns/publish", api.PublishPattern)
+		apiGroup.DELETE("/dendro_scale_patterns/:id", api.DeletePattern)
+		apiGroup.POST("/dendro_scale_patterns/:id/like", api.LikePattern)
+
+		apiGroup.POST("/dendro_researchers/register", api.RegisterResearcher)
+		apiGroup.POST("/dendro_researchers/login", api.LoginResearcher)
+		apiGroup.POST("/dendro_researchers/logout", api.LogoutResearcher)
+	}
 
 	addr := fmt.Sprintf("%s:%d", cfg.ServiceHost, cfg.ServicePort)
 	if err := r.Run(addr); err != nil {

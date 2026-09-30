@@ -14,11 +14,11 @@
     <main class="mosaic">
         <h1 class="page-title">Аномальные паттерны</h1>
         <form class="filter" method="get" action="/dendro_scale_patterns">
-            <div class="filter__pill">
+            <div class="filter__pill filter__pill--dates">
                 <span class="filter__caption">С</span>
-                <input class="filter__year" type="number" name="year_from" min="1" max="2100" placeholder="год" value="{{ .YearFrom }}">
+                <input class="filter__date" type="date" name="date_from" value="{{ .DateFrom }}">
                 <span class="filter__caption">по</span>
-                <input class="filter__year" type="number" name="year_to" min="1" max="2100" placeholder="год" value="{{ .YearTo }}">
+                <input class="filter__date" type="date" name="date_to" value="{{ .DateTo }}">
                 <button class="filter__submit" type="submit">Найти</button>
             </div>
         </form>
@@ -37,7 +37,7 @@
                 </form>
             </article>
             {{ else }}
-            <p class="mosaic__empty">Нет паттернов за выбранные годы.</p>
+            <p class="mosaic__empty">Нет паттернов за выбранные даты.</p>
             {{ end }}
         </section>
     </main>

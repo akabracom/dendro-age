@@ -1,0 +1,212 @@
+Диаграмма классов лабы 3 — Dendro Age
+======================================
+Рисуй в том же файле StarUML, что и ER.
+Это Class Diagram / Component-style схема как на примере:
+сверху клиент, потом бэкенд с доменами и методами,
+ниже модели, внизу таблицы БД.
+
+
+================================================================
+КАК ВЫГЛЯДИТ СХЕМА ЦЕЛИКОМ
+================================================================
+
+                    +-----------+
+                    | Insomnia  |
+                    +-----+-----+
+                          |
+          +---------------+---------------+
+          |                               |
+          v                               v
+   <<interface>>                   <<interface>>
+ API паттернов дендрошкалы     API исследователей
+          |                               |
+          +---------------+---------------+
+                          |
+                          v
++------------------------------------------------------------------+
+|                         Бэкенд                                   |
+|                                                                  |
+|  +-------------------------------+  +--------------------------+ |
+|  | Домен паттернов дендрошкалы   |  | Домен исследователей     | |
+|  |-------------------------------|  |--------------------------| |
+|  | GET  /api/dendro_scale_       |  | POST /api/dendro_        | |
+|  |      patterns()               |  |      researchers/        | |
+|  | GET  /api/dendro_scale_       |  |      register()          | |
+|  |      patterns/feed()          |  | POST /api/dendro_        | |
+|  | GET  /api/dendro_scale_       |  |      researchers/login() | |
+|  |      patterns/feed/:id()      |  | POST /api/dendro_        | |
+|  | GET  /api/dendro_scale_       |  |      researchers/logout()| |
+|  |      patterns/draft()         |  +--------------------------+ |
+|  | POST /api/dendro_scale_       |                               |
+|  |      patterns()               |                               |
+|  | PUT  /api/dendro_scale_       |                               |
+|  |      patterns/publish()       |                               |
+|  | DELETE /api/dendro_scale_     |                               |
+|  |        patterns/:id()         |                               |
+|  | POST /api/dendro_scale_       |                               |
+|  |      patterns/:id/like()      |                               |
+|  +---------------+---------------+                               |
+|                  |                                               |
++------------------+-----------------------------------------------+
+                   |
+     +-------------+-------------+
+     |             |             |
+     v             v             v
++-----------+ +-----------+ +------------------+
+|  Модели   | |  Модели   | |     Модели       |
+|-----------| |-----------| |------------------|
+| Dendro    | | Dendro    | | DendroPattern    |
+| Scale     | | Researcher| | Like             |
+| Pattern   | |           | |                  |
++-----+-----+ +-----+-----+ +--------+---------+
+      |             |                |
+      v             v                v
++-----------+ +-----------+ +------------------+
+|  Таблицы  | |  Таблицы  | |     Таблицы      |
+|    БД     | |    БД     | |       БД         |
+|-----------| |-----------| |------------------|
+| dendro_   | | dendro_   | | dendro_pattern_  |
+| scale_    | | researchers| | likes            |
+| patterns  | |           | |                  |
++-----------+ +-----------+ +------------------+
+
+Связи таблиц (как на ER, сплошные, без названий):
+
+  dendro_researchers  1 ---- *  dendro_scale_patterns
+  dendro_researchers  1 ---- *  dendro_pattern_likes
+  dendro_scale_patterns 1 -- *  dendro_pattern_likes
+
+
+Плюс 4 страницы SSR (можно отдельным блоком слева/сверху):
+
++------------------+
+| Страницы SSR     |
+|------------------|
+| Лента            |
+| Добавление       |
+| Плитка           |
+| Не найден        |
++--------+---------+
+         |
+         v  (зависит от HTML-обработчиков, не от /api)
+   Handler SSR  -->  Repository  -->  Модели/БД
+
+А Insomnia / будущий SPA зависят от доменов /api.
+
+
+================================================================
+ЧТО ПИСАТЬ В КАЖДОМ БЛОКЕ
+================================================================
+
+1) Клиент
+   Имя: Insomnia
+   (на защите можно сказать: Postman/Insomnia)
+
+2) Интерфейсы (кружки/lollipop как на примере, или прямоугольники
+   со стереотипом <<interface>>)
+   - API паттернов дендрошкалы
+   - API исследователей
+
+3) Домен паттернов дендрошкалы — методы:
+   GET    /api/dendro_scale_patterns()
+   GET    /api/dendro_scale_patterns/feed()
+   GET    /api/dendro_scale_patterns/feed/:id()
+   GET    /api/dendro_scale_patterns/draft()
+   POST   /api/dendro_scale_patterns()
+   PUT    /api/dendro_scale_patterns/publish()
+   DELETE /api/dendro_scale_patterns/:id()
+   POST   /api/dendro_scale_patterns/:id/like()
+
+4) Домен исследователей — методы:
+   POST /api/dendro_researchers/register()
+   POST /api/dendro_researchers/login()
+   POST /api/dendro_researchers/logout()
+
+5) Модели (классы):
+   DendroScalePattern
+   DendroResearcher
+   DendroPatternLike
+
+6) Таблицы БД:
+   dendro_scale_patterns
+   dendro_researchers
+   dendro_pattern_likes
+
+
+================================================================
+КАКИЕ СТРЕЛКИ РИСОВАТЬ
+================================================================
+
+Insomnia  ---->  интерфейсы API
+интерфейсы ----> соответствующие домены внутри «Бэкенд»
+Домен паттернов ----> DendroScalePattern
+Домен паттернов ----> DendroPatternLike
+Домен исследователей ----> DendroResearcher
+Домен паттернов ----> DendroResearcher
+  (создатель через singleton, лайк от текущего исследователя)
+
+Модель ----> своя таблица БД
+  DendroScalePattern   ----> dendro_scale_patterns
+  DendroResearcher     ----> dendro_researchers
+  DendroPatternLike    ----> dendro_pattern_likes
+
+Страницы SSR ----> (можно пунктиром к домену паттернов
+  или отдельной подписью: SSR ходит в Handler, не в /api)
+
+Между таблицами — ассоциации 1..* как на ER.
+
+
+================================================================
+КАК СОБРАТЬ В STARUML ПО ШАГАМ
+================================================================
+
+1. Model → Add Diagram → Class Diagram
+   (или Component Diagram, если привычнее как на примере)
+   Имя: «Классы бэкенда Dendro Age»
+
+2. Большой прямоугольник Package/Subsystem:
+   имя «Бэкенд»
+
+3. Внутри два Class (или Component):
+   «Домен паттернов дендрошкалы»
+   «Домен исследователей»
+   В каждый через Add → Operation добавь методы из списка выше.
+   В Name операции пиши целиком, например:
+   GET /api/dendro_scale_patterns()
+
+4. Над бэкендом:
+   - Class «Insomnia»
+   - два Interface: «API паттернов дендрошкалы»,
+     «API исследователей»
+   Связи: Association от Insomnia к интерфейсам,
+   Realization/Dependency от интерфейсов к доменам.
+
+5. Под бэкендом три Class — модели.
+   Dependency (пунктир со стрелкой) от доменов к моделям.
+
+6. Ещё ниже три Class — таблицы БД.
+   Dependency от моделей к таблицам.
+   Между таблицами Association с multiplicity 1 и *.
+
+7. Отдельно Package «Страницы SSR» с 4 классами:
+   Лента, Добавление, Плитка, Не найден.
+   Пунктир к домену паттернов или к Handler
+   (подпись: HTML SSR).
+
+8. Можно рядом Note:
+   Singleton currentresearcher.Login() = "shebe"
+   MinIO bucket: drengo-age-img
+   Сериализаторы: PatternDTO, ResearcherDTO
+
+
+================================================================
+КРАТКО ДЛЯ ЗАЩИТЫ
+================================================================
+
+«Сверху клиент Insomnia. Он ходит в два интерфейса API.
+Интерфейсы реализованы двумя доменами бэкенда:
+паттерны дендрошкалы и исследователи.
+Домены зависят от моделей, модели — от таблиц БД.
+Страницы лента/добавление/плитка — SSR HTML,
+они используют тот же репозиторий и модели.
+Создатель зафиксирован singleton shebe.»

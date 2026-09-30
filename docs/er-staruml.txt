@@ -1,44 +1,39 @@
-ER для StarUML — Dendro Age, лаба 2
-====================================
-Читай сверху вниз. Каждая таблица — отдельный блок.
-Связи подписаны между блоками стрелками.
+ER для StarUML — Dendro Age
+============================
+Связи: СПЛОШНЫЕ линии (Identifying Relationship в StarUML = сплошная).
+Пунктир не использовать. Названия связей НЕ подписывать.
+Каскадное удаление запрещено: OnDelete = Restrict.
 
 
 ================================================================
 ТАБЛИЦА 1.  dendro_researchers
-            пользователи / исследователи дендрошкалы
 ================================================================
 
 +------------------------------------------------------------------+
 |  dendro_researchers                                              |
 +------------------------------------------------------------------+
-|  столбец       | ключ      | тип           | длина | обязательный |
-|----------------+-----------+---------------+-------+--------------|
-|  id            | PK        | BIGINT        |   —   | да           |
-|  login         | UNIQUE    | VARCHAR       |  64   | да           |
-|  full_name     |           | VARCHAR       | 128   | да           |
+|  столбец       | ключ   | тип      | длина | обязательный |
+|----------------+--------+----------+-------+--------------|
+|  id            | PK     | BIGINT   |   —   | да           |
+|  login         | UNIQUE | VARCHAR  |  64   | да           |
+|  password      |        | VARCHAR  | 128   | да           |
+|  full_name     |        | VARCHAR  | 128   | да           |
 +------------------------------------------------------------------+
-
-смысл полей:
-  id         — номер исследователя
-  login      — уникальный логин (в приложении сейчас shebe)
-  full_name  — ФИО
 
 
           |
-          |   связь A
-          |   один исследователь создаёт много паттернов
-          |   1  ........................  *
-          |   OnDelete = RESTRICT
-          |   OnUpdate = CASCADE
-          |   FK ниже: creator_id
+          |   1 ........................ *
+          |   сплошная линия, без названия
+          |   OnDelete Restrict
           v
 
 
 ================================================================
 ТАБЛИЦА 2.  dendro_scale_patterns
-            услуги = аномальные паттерны дендрошкалы
 ================================================================
+
+После INSERT черновика обязательны только: title, status, creator_id, created_at.
+Остальные поля НЕОБЯЗАТЕЛЬНЫЕ (nullable / могут быть пустыми).
 
 +------------------------------------------------------------------+
 |  dendro_scale_patterns                                           |
@@ -47,141 +42,58 @@ ER для StarUML — Dendro Age, лаба 2
 |----------------------+------+-------------+-------+--------------|
 |  id                  | PK   | BIGINT      |   —   | да           |
 |  title               |      | VARCHAR     | 160   | да           |
-|  short_description   |      | VARCHAR     | 500   | нет          |
-|  full_description    |      | VARCHAR     | 2000  | нет          |
+|  short_description   |      | VARCHAR     | 500   | НЕТ          |
+|  full_description    |      | VARCHAR     | 2000  | НЕТ          |
 |  status              |      | VARCHAR     |  20   | да           |
-|  image_url           |      | VARCHAR     | 255   | нет          |
-|  video_url           |      | VARCHAR     | 255   | нет          |
-|  event_year          |      | BIGINT      |   —   | нет          |
-|  ring_count          |      | BIGINT      |   —   | нет          |
-|  created_at          |      | TIMESTAMPTZ |   —   | нет          |
-|  formed_at           |      | TIMESTAMPTZ |   —   | нет (NULL)   |
+|  image_url           |      | VARCHAR     | 255   | НЕТ          |
+|  video_url           |      | VARCHAR     | 255   | НЕТ          |
+|  event_year          |      | BIGINT      |   —   | НЕТ          |
+|  ring_count          |      | BIGINT      |   —   | НЕТ          |
+|  created_at          |      | TIMESTAMPTZ |   —   | да           |
+|  formed_at           |      | TIMESTAMPTZ |   —   | НЕТ (NULL)   |
 |  creator_id          | FK   | BIGINT      |   —   | да           |
 +------------------------------------------------------------------+
 
-FK:
-  creator_id  ----->  dendro_researchers.id
-
-смысл полей:
-  id                 — номер паттерна
-  title              — название
-  short_description  — короткое описание (в ленте сверху)
-  full_description   — длинное описание (кнопка «Подробнее»)
-  status             — только три значения: draft / published / deleted
-  image_url          — ссылка на фото в MinIO; пусто = дефолт на сервере
-  video_url          — ссылка на видео в MinIO; пусто = дефолт на сервере
-  event_year         — год начала          (поле по теме)
-  ring_count         — количество колец    (поле по теме)
-  created_at         — когда запись создали
-  formed_at          — когда опубликовали (дата формирования)
-  creator_id         — кто создал (ссылка на таблицу 1)
-
-доп. правило (можно подписать рядом с таблицей):
-  у одного creator_id не больше одной строки со status = draft
+В StarUML у необязательных колонок поставь Nullable = true (галочка N).
 
 
           |
-          |   связь C
-          |   один паттерн получает много лайков
-          |   1  ........................  *
-          |   OnDelete = RESTRICT
-          |   OnUpdate = CASCADE
-          |   FK ниже: pattern_id
+          |   1 ........................ *
+          |   сплошная линия, без названия
+          |   OnDelete Restrict
           v
 
 
 ================================================================
 ТАБЛИЦА 3.  dendro_pattern_likes
-            лайки  (связь многие-ко-многим)
 ================================================================
 
 +------------------------------------------------------------------+
 |  dendro_pattern_likes                                            |
 +------------------------------------------------------------------+
-|  столбец         | ключ           | тип    | длина | обязательный |
-|------------------+----------------+--------+-------+--------------|
-|  id              | PK             | BIGINT |   —   | да           |
-|  researcher_id   | FK             | BIGINT |   —   | да           |
-|  pattern_id      | FK             | BIGINT |   —   | да           |
-|  пара полей      | UNIQUE вместе  |        |       |              |
-|  researcher_id   |                |        |       |              |
-|  + pattern_id    |                |        |       |              |
+|  столбец         | ключ                    | тип    | обяз. |
+|------------------+-------------------------+--------+-------|
+|  id              | PK                      | BIGINT | да    |
+|  researcher_id   | FK                      | BIGINT | да    |
+|  pattern_id      | FK                      | BIGINT | да    |
+|  (researcher_id, | UNIQUE вместе           |        |       |
+|   pattern_id)    |                         |        |       |
 +------------------------------------------------------------------+
 
-FK:
-  researcher_id  ----->  dendro_researchers.id      (связь B)
-  pattern_id     ----->  dendro_scale_patterns.id   (связь C)
 
-смысл полей:
-  id             — номер строки лайка
-  researcher_id  — кто поставил лайк
-  pattern_id     — какому паттерну
-  UNIQUE пара    — один человек может лайкнуть паттерн только один раз
-
-
-          ^
-          |
-          |   связь B идёт СБОКУ, не вниз:
-          |   один исследователь ставит много лайков
-          |   dendro_researchers  1  ....  *  dendro_pattern_likes
-          |   OnDelete = RESTRICT
-          |   OnUpdate = CASCADE
-          |
+Также: dendro_researchers 1 ---- * dendro_pattern_likes
+сплошная линия, без названия, OnDelete Restrict.
 
 
 ================================================================
-ТРИ СВЯЗИ — что именно рисовать в StarUML
+КАК В STARUML УБРАТЬ ПУНКТИР И НАЗВАНИЯ
 ================================================================
 
-Связь A
-  dendro_researchers          1  --------  *   dendro_scale_patterns
-  родитель: researchers
-  потомок:  patterns
-  FK в потомке: creator_id
-  тип связи: non-identifying (у паттерна свой PK id)
-  Delete: Restrict
-  Update: Cascade
-  подпись: «создаёт»
-
-Связь B
-  dendro_researchers          1  --------  *   dendro_pattern_likes
-  FK в потомке: researcher_id
-  тип связи: non-identifying
-  Delete: Restrict
-  Update: Cascade
-  подпись: «ставит лайк»
-
-Связь C
-  dendro_scale_patterns       1  --------  *   dendro_pattern_likes
-  FK в потомке: pattern_id
-  тип связи: non-identifying
-  Delete: Restrict
-  Update: Cascade
-  подпись: «получает лайк»
-
-Важно:
-  м-м «исследователь ↔ паттерн» НЕ рисуй одной линией со звёздочками.
-  Рисуй две линии 1..* к промежуточной таблице dendro_pattern_likes.
-
-
-================================================================
-КАК РАССТАВИТЬ БЛОКИ НА ХОЛСТЕ STARUML
-================================================================
-
-        [ dendro_researchers ]
-                  |
-                  | связь A (создаёт)
-                  v
-        [ dendro_scale_patterns ]
-                  |
-                  | связь C (получает лайк)
-                  v
-        [ dendro_pattern_likes ]
-                  ^
-                  |
-                  +---- связь B сюда слева/справа
-                        от dendro_researchers
-
-
-Каскадное удаление нигде не ставить. Везде Restrict.
+1. Связь рисуй через Identifying Relationship (сплошная),
+   либо в свойствах связи сними Identifying=false / поставь Identifying=true
+   так, чтобы линия стала сплошной (в твоей версии ERD).
+2. Кликни линию → Name очисти (пусто).
+3. У колонок паттерна: short_description, full_description, image_url,
+   video_url, event_year, ring_count, formed_at → Nullable = ON.
+4. Добавь password в dendro_researchers (VARCHAR 128, NOT NULL).
 )

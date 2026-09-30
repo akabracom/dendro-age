@@ -1,0 +1,181 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-09-29T00:00:00.000Z",
+  "__export_source": "dendro-age:lab3",
+  "resources": [
+    {
+      "_id": "wrk_dendro_age_lab3b",
+      "_type": "workspace",
+      "name": "Dendro Age Lab 3",
+      "description": "REST API паттернов дендрошкалы",
+      "scope": "collection"
+    },
+    {
+      "_id": "req_list_filter_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "1 GET список паттернов с фильтром",
+      "method": "GET",
+      "url": "http://localhost:8088/api/dendro_scale_patterns?date_from=1700-01-01&date_to=2000-12-31",
+      "headers": [],
+      "parameters": [],
+      "body": {}
+    },
+    {
+      "_id": "req_create_pattern_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "2 POST добавить паттерн с фото и видео",
+      "method": "POST",
+      "url": "http://localhost:8088/api/dendro_scale_patterns",
+      "headers": [],
+      "parameters": [],
+      "body": {
+        "mimeType": "multipart/form-data",
+        "params": [
+          {
+            "name": "title",
+            "value": "API drought cluster 1650",
+            "id": "pair_title_b"
+          },
+          {
+            "name": "image",
+            "type": "file",
+            "fileName": "",
+            "id": "pair_image_b"
+          },
+          {
+            "name": "video",
+            "type": "file",
+            "fileName": "",
+            "id": "pair_video_b"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "req_get_draft_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "3 GET черновик паттерна",
+      "method": "GET",
+      "url": "http://localhost:8088/api/dendro_scale_patterns/draft",
+      "headers": [],
+      "parameters": [],
+      "body": {}
+    },
+    {
+      "_id": "req_publish_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "4 PUT опубликовать паттерн",
+      "method": "PUT",
+      "url": "http://localhost:8088/api/dendro_scale_patterns/publish",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"short_description\": \"Короткое описание паттерна\",\n  \"full_description\": \"Полное описание паттерна дендрошкалы\",\n  \"event_year\": 1650,\n  \"ring_count\": 4\n}"
+      }
+    },
+    {
+      "_id": "req_feed_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "5 GET лента без id",
+      "method": "GET",
+      "url": "http://localhost:8088/api/dendro_scale_patterns/feed",
+      "headers": [],
+      "parameters": [],
+      "body": {}
+    },
+    {
+      "_id": "req_feed_next_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "6 GET лента по id next",
+      "method": "GET",
+      "url": "http://localhost:8088/api/dendro_scale_patterns/feed/4?next=true",
+      "headers": [],
+      "parameters": [],
+      "body": {}
+    },
+    {
+      "_id": "req_like_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "7 POST лайк паттерна",
+      "method": "POST",
+      "url": "http://localhost:8088/api/dendro_scale_patterns/4/like",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"like\": 1\n}"
+      }
+    },
+    {
+      "_id": "req_delete_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "8 DELETE удалить паттерн",
+      "method": "DELETE",
+      "url": "http://localhost:8088/api/dendro_scale_patterns/8",
+      "headers": [],
+      "parameters": [],
+      "body": {}
+    },
+    {
+      "_id": "req_register_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "9 POST регистрация исследователя",
+      "method": "POST",
+      "url": "http://localhost:8088/api/dendro_researchers/register",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"login\": \"petr_lab3\",\n  \"password\": \"petr1234\",\n  \"full_name\": \"Petr Dendrov\"\n}"
+      }
+    },
+    {
+      "_id": "req_login_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "10 POST аутентификация заглушка",
+      "method": "POST",
+      "url": "http://localhost:8088/api/dendro_researchers/login",
+      "headers": [],
+      "parameters": [],
+      "body": {}
+    },
+    {
+      "_id": "req_logout_b",
+      "_type": "request",
+      "parentId": "wrk_dendro_age_lab3b",
+      "name": "11 POST деавторизация заглушка",
+      "method": "POST",
+      "url": "http://localhost:8088/api/dendro_researchers/logout",
+      "headers": [],
+      "parameters": [],
+      "body": {}
+    }
+  ]
+}

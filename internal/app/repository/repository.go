@@ -10,6 +10,7 @@ import (
 	"dendro-age/internal/app/currentresearcher"
 	"dendro-age/internal/app/ds"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -173,10 +174,94 @@ func ResolveMedia(url string, fallback string) string {
 	}
 	client := &http.Client{Timeout: 800 * time.Millisecond}
 	resp, err := client.Head(url)
-	if err != nil || resp.StatusCode >= 400 {
+	if err != nil {
+		return fallback
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
 		return fallback
 	}
 	return url
+}
+
+func (r *Repository) CreateDraftWithMedia(creatorID uint, title, imageURL, videoURL string) (ds.DendroScalePattern, error) {
+	var existing ds.DendroScalePattern
+	err := r.db.Where("creator_id = ? AND status = ?", creatorID, ds.StatusDraft).First(&existing).Error
+	if err == nil {
+		existing.Title = title
+		if imageURL != "" {
+			existing.ImageURL = imageURL
+		}
+		if videoURL != "" {
+			existing.VideoURL = videoURL
+		}
+		if err := r.db.Save(&existing).Error; err != nil {
+			return ds.DendroScalePattern{}, err
+		}
+		return existing, nil
+	}
+	pattern := ds.DendroScalePattern{
+		Title:     title,
+		Status:    ds.StatusDraft,
+		ImageURL:  imageURL,
+		VideoURL:  videoURL,
+		CreatorID: creatorID,
+		CreatedAt: time.Now(),
+	}
+	if err := r.db.Create(&pattern).Error; err != nil {
+		return ds.DendroScalePattern{}, err
+	}
+	return pattern, nil
+}
+
+func (r *Repository) SoftDeletePatternORM(id uint) error {
+	var pattern ds.DendroScalePattern
+	if err := r.db.Where("id = ? AND status <> ?", id, ds.StatusDeleted).First(&pattern).Error; err != nil {
+		return fmt.Errorf("паттерн %d не найден", id)
+	}
+	pattern.Status = ds.StatusDeleted
+	return r.db.Save(&pattern).Error
+}
+
+func (r *Repository) SetLike(researcherID, patternID uint, liked bool) error {
+	var pattern ds.DendroScalePattern
+	if err := r.db.Where("id = ? AND status = ?", patternID, ds.StatusPublished).First(&pattern).Error; err != nil {
+		return fmt.Errorf("паттерн не найден или удалён")
+	}
+	if liked {
+		like := ds.DendroPatternLike{ResearcherID: researcherID, PatternID: patternID}
+		return r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&like).Error
+	}
+	return r.db.Where("researcher_id = ? AND pattern_id = ?", researcherID, patternID).Delete(&ds.DendroPatternLike{}).Error
+}
+
+func (r *Repository) RegisterResearcher(login, password, fullName string) (ds.DendroResearcher, error) {
+	login = strings.TrimSpace(login)
+	fullName = strings.TrimSpace(fullName)
+	if login == "" || password == "" || fullName == "" {
+		return ds.DendroResearcher{}, fmt.Errorf("нужны login, password и full_name")
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return ds.DendroResearcher{}, err
+	}
+	researcher := ds.DendroResearcher{
+		Login:    login,
+		Password: string(hash),
+		FullName: fullName,
+	}
+	if err := r.db.Create(&researcher).Error; err != nil {
+		return ds.DendroResearcher{}, fmt.Errorf("логин уже занят или ошибка регистрации")
+	}
+	return researcher, nil
+}
+
+func hashPassword(raw string) string {
+	hash, err := bcrypt.GenerateFromPassword([]byte(raw), bcrypt.DefaultCost)
+	if err != nil {
+		return raw
+	}
+	return string(hash)
 }
 
 func (r *Repository) seedIfEmpty() error {
@@ -185,11 +270,11 @@ func (r *Repository) seedIfEmpty() error {
 		return err
 	}
 	if count > 0 {
-		return nil
+		return r.backfillPasswords()
 	}
 
-	shebe := ds.DendroResearcher{Login: currentresearcher.Login(), FullName: "Исследователь дендрошкалы"}
-	anna := ds.DendroResearcher{Login: "anna", FullName: "Анна Кольцова"}
+	shebe := ds.DendroResearcher{Login: currentresearcher.Login(), Password: hashPassword("shebe123"), FullName: "Исследователь дендрошкалы"}
+	anna := ds.DendroResearcher{Login: "anna", Password: hashPassword("anna1234"), FullName: "Анна Кольцова"}
 	if err := r.db.Create(&shebe).Error; err != nil {
 		return err
 	}
@@ -248,6 +333,26 @@ func (r *Repository) seedIfEmpty() error {
 		{ResearcherID: anna.ID, PatternID: patterns[3].ID},
 	}
 	return r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&likes).Error
+}
+
+func (r *Repository) backfillPasswords() error {
+	var researchers []ds.DendroResearcher
+	if err := r.db.Find(&researchers).Error; err != nil {
+		return err
+	}
+	for _, researcher := range researchers {
+		if researcher.Password != "" {
+			continue
+		}
+		pass := "dendro1234"
+		if researcher.Login == currentresearcher.Login() {
+			pass = "shebe123"
+		}
+		if err := r.db.Model(&researcher).Update("password", hashPassword(pass)).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *Repository) backfillFullDescriptions() error {

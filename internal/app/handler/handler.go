@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"dendro-age/internal/app/ds"
 	"dendro-age/internal/app/repository"
@@ -44,16 +45,17 @@ func (h *Handler) toViews(patterns []ds.DendroScalePattern) []patternView {
 	return views
 }
 
-func parseYear(raw string) *int {
+func parseYearFromDate(raw string) *int {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return nil
 	}
-	year, err := strconv.Atoi(raw)
+	parsed, err := time.Parse("2006-01-02", raw)
 	if err != nil {
-		log.Println("некорректный год фильтра:", err)
+		log.Println("некорректная дата фильтра:", err)
 		return nil
 	}
+	year := parsed.Year()
 	return &year
 }
 
@@ -73,9 +75,9 @@ func (h *Handler) renderNotFound(ctx *gin.Context) {
 }
 
 func (h *Handler) GetDendroScalePatterns(ctx *gin.Context) {
-	yearFromRaw := ctx.Query("year_from")
-	yearToRaw := ctx.Query("year_to")
-	patterns, err := h.Repository.ListPublished(parseYear(yearFromRaw), parseYear(yearToRaw))
+	dateFromRaw := ctx.Query("date_from")
+	dateToRaw := ctx.Query("date_to")
+	patterns, err := h.Repository.ListPublished(parseYearFromDate(dateFromRaw), parseYearFromDate(dateToRaw))
 	if err != nil {
 		log.Println(err)
 		ctx.Status(http.StatusInternalServerError)
@@ -84,8 +86,8 @@ func (h *Handler) GetDendroScalePatterns(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "mosaic.html", gin.H{
 		"ActiveTab":           "mosaic",
 		"DendroScalePatterns": h.toViews(patterns),
-		"YearFrom":            yearFromRaw,
-		"YearTo":              yearToRaw,
+		"DateFrom":            dateFromRaw,
+		"DateTo":              dateToRaw,
 	})
 }
 

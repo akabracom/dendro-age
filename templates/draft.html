@@ -16,14 +16,15 @@
         {{ if .HasDraft }}
         <p class="page-sub">Заполните поля по теме и опубликуйте</p>
         <form class="draft__form" action="/dendro_scale_patterns/draft/publish" method="post">
-            <label class="media-block media-block--video">
-                <span class="media-block__caption">Видео паттерна</span>
-                <input class="media-block__input" type="file" accept="video/*" lang="en">
-            </label>
-            <label class="media-block media-block--image js-draft-image" style="background-image: url('{{ .DendroScalePattern.ImageSrc }}')">
-                <span class="media-block__caption media-block__caption--on-photo">Изображение</span>
-                <input class="media-block__input media-block__input--on-photo js-draft-image-input" type="file" accept="image/*" lang="en">
-            </label>
+            <div class="media-stack">
+                <div class="media-block media-block--video">
+                    <span class="media-block__caption">Видео паттерна</span>
+                    <video class="draft__preview-video" src="{{ .DendroScalePattern.VideoSrc }}" poster="{{ .DendroScalePattern.ImageSrc }}" muted loop playsinline controls></video>
+                </div>
+                <div class="media-block media-block--image" style="background-image: url('{{ .DendroScalePattern.ImageSrc }}')">
+                    <span class="media-block__caption media-block__caption--on-photo">Изображение</span>
+                </div>
+            </div>
             <div class="fields-card">
                 <p class="fields-card__label">Название
                     <span class="fields-card__input">{{ .DendroScalePattern.Title }}</span>
@@ -48,14 +49,17 @@
         {{ else }}
         <p class="page-sub">Укажите название, фото и видео, затем нажмите Далее</p>
         <form class="draft__form" action="/dendro_scale_patterns/draft/next" method="post">
-            <label class="media-block media-block--video">
-                <span class="media-block__caption">Видео паттерна</span>
-                <input class="media-block__input" type="file" accept="video/*" lang="en">
-            </label>
-            <label class="media-block media-block--image js-draft-image" style="background-image: url('{{ .DendroScalePattern.ImageSrc }}')">
-                <span class="media-block__caption media-block__caption--on-photo">Изображение</span>
-                <input class="media-block__input media-block__input--on-photo js-draft-image-input" type="file" accept="image/*" lang="en">
-            </label>
+            <div class="media-stack">
+                <label class="media-block media-block--video">
+                    <span class="media-block__caption">Видео паттерна</span>
+                    <video class="draft__preview-video" src="{{ .DendroScalePattern.VideoSrc }}" poster="{{ .DendroScalePattern.ImageSrc }}" muted loop playsinline controls></video>
+                    <input class="media-block__input" type="file" accept="video/*" lang="en">
+                </label>
+                <label class="media-block media-block--image js-draft-image" style="background-image: url('{{ .DendroScalePattern.ImageSrc }}')">
+                    <span class="media-block__caption media-block__caption--on-photo">Изображение</span>
+                    <input class="media-block__input media-block__input--on-photo js-draft-image-input" type="file" accept="image/*" lang="en">
+                </label>
+            </div>
             <div class="fields-card">
                 <label class="fields-card__label">Название
                     <input class="fields-card__input" type="text" name="title" required>

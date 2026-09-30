@@ -252,25 +252,41 @@ textarea {
     padding: 6px 8px 6px 14px;
 }
 
+.filter__pill--dates {
+    flex-wrap: wrap;
+}
+
 .filter__caption {
     font-size: 14px;
     color: var(--color-muted);
     white-space: nowrap;
 }
 
-.filter__year {
-    width: 72px;
+.filter__date {
     border: 0;
     background: transparent;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-text);
     padding: 6px 0;
+    min-width: 0;
+    flex: 1 1 110px;
 }
 
-.filter__year::-webkit-outer-spin-button,
-.filter__year::-webkit-inner-spin-button {
-    opacity: 1;
+.media-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.draft__preview-video {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin: 10px 0 0;
+    background: #000;
+    display: block;
 }
 
 .filter__submit {
