@@ -1,0 +1,196 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Dendro Age API",
+    "version": "1.0.0",
+    "description": "Паттерны дендрошкалы. Чтение без токена. Создание, публикация, удаление, лайк, черновик и выход — только с JWT создателя."
+  },
+  "servers": [{ "url": "http://localhost:8088" }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/api/dendro_scale_patterns": {
+      "get": {
+        "tags": ["паттерны"],
+        "summary": "Список опубликованных паттернов",
+        "parameters": [
+          { "name": "date_from", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "date_to", "in": "query", "schema": { "type": "string", "format": "date" } }
+        ],
+        "responses": { "200": { "description": "список" } }
+      },
+      "post": {
+        "tags": ["паттерны"],
+        "summary": "Создать черновик с фото и видео",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "image": { "type": "string", "format": "binary" },
+                  "video": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "черновик создан" },
+          "401": { "description": "нет токена" }
+        }
+      }
+    },
+    "/api/dendro_scale_patterns/feed": {
+      "get": {
+        "tags": ["паттерны"],
+        "summary": "Лента без id",
+        "responses": { "200": { "description": "первый опубликованный" } }
+      }
+    },
+    "/api/dendro_scale_patterns/feed/{id}": {
+      "get": {
+        "tags": ["паттерны"],
+        "summary": "Лента по id, next=true — следующий",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "next", "in": "query", "schema": { "type": "boolean" } }
+        ],
+        "responses": { "200": { "description": "паттерн" }, "404": { "description": "не найден" } }
+      }
+    },
+    "/api/dendro_scale_patterns/draft": {
+      "get": {
+        "tags": ["паттерны"],
+        "summary": "Черновик текущего создателя",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "черновик" }, "401": { "description": "нет токена" } }
+      }
+    },
+    "/api/dendro_scale_patterns/publish": {
+      "put": {
+        "tags": ["паттерны"],
+        "summary": "Опубликовать черновик",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["short_description", "event_year", "ring_count"],
+                "properties": {
+                  "short_description": { "type": "string" },
+                  "full_description": { "type": "string" },
+                  "event_year": { "type": "integer" },
+                  "ring_count": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "опубликован" },
+          "401": { "description": "гость" },
+          "403": { "description": "токен в blacklist" }
+        }
+      }
+    },
+    "/api/dendro_scale_patterns/{id}": {
+      "delete": {
+        "tags": ["паттерны"],
+        "summary": "Логическое удаление",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "удалён" }, "401": { "description": "нет токена" } }
+      }
+    },
+    "/api/dendro_scale_patterns/{id}/like": {
+      "post": {
+        "tags": ["паттерны"],
+        "summary": "Лайк 1 или снятие 0",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "like": { "type": "integer", "enum": [0, 1] } }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "лайк обновлён" }, "401": { "description": "нет токена" } }
+      }
+    },
+    "/api/dendro_researchers/register": {
+      "post": {
+        "tags": ["исследователи"],
+        "summary": "Регистрация",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["login", "password", "full_name"],
+                "properties": {
+                  "login": { "type": "string" },
+                  "password": { "type": "string" },
+                  "full_name": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "создан" } }
+      }
+    },
+    "/api/dendro_researchers/login": {
+      "post": {
+        "tags": ["исследователи"],
+        "summary": "Аутентификация, выдаёт JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["login", "password"],
+                "properties": {
+                  "login": { "type": "string", "example": "shebe" },
+                  "password": { "type": "string", "example": "shebe123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "access_token" },
+          "403": { "description": "неверный логин или пароль" }
+        }
+      }
+    },
+    "/api/dendro_researchers/logout": {
+      "post": {
+        "tags": ["исследователи"],
+        "summary": "Выход: токен в Redis blacklist",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "токен заблокирован" }, "401": { "description": "нет токена" } }
+      }
+    }
+  }
+}

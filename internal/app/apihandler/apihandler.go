@@ -1,12 +1,14 @@
 package apihandler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"dendro-age/internal/app/auth"
 	"dendro-age/internal/app/ds"
 	"dendro-age/internal/app/miniofile"
 	"dendro-age/internal/app/repository"
@@ -16,20 +18,22 @@ import (
 )
 
 type API struct {
-	Repo  *repository.Repository
-	Minio *miniofile.Client
+	Repo   *repository.Repository
+	Minio  *miniofile.Client
+	Tokens *auth.Tokens
+	Gate   *auth.Gate
 }
 
-func New(repo *repository.Repository, minioClient *miniofile.Client) *API {
-	return &API{Repo: repo, Minio: minioClient}
+func New(repo *repository.Repository, minioClient *miniofile.Client, tokens *auth.Tokens, gate *auth.Gate) *API {
+	return &API{Repo: repo, Minio: minioClient, Tokens: tokens, Gate: gate}
 }
 
-func (a *API) currentCreatorID() (uint, error) {
-	researcher, err := a.Repo.CurrentResearcher()
-	if err != nil {
-		return 0, err
+func (a *API) currentCreatorID(ctx *gin.Context) (uint, error) {
+	id, ok := auth.ResearcherID(ctx)
+	if !ok {
+		return 0, fmt.Errorf("исследователь не авторизован")
 	}
-	return researcher.ID, nil
+	return id, nil
 }
 
 func parseYearFromDate(raw string) *int {
@@ -53,6 +57,29 @@ func (a *API) likeMap(patterns []ds.DendroScalePattern) map[uint]int {
 	return likes
 }
 
+func (a *API) likedFlag(ctx *gin.Context, patternID uint) int {
+	creatorID, err := a.currentCreatorID(ctx)
+	if err != nil {
+		return 0
+	}
+	if a.Repo.HasLike(creatorID, patternID) {
+		return 1
+	}
+	return 0
+}
+
+func (a *API) likedMap(ctx *gin.Context, patterns []ds.DendroScalePattern) map[uint]int {
+	flags := make(map[uint]int, len(patterns))
+	for _, pattern := range patterns {
+		flags[pattern.ID] = a.likedFlag(ctx, pattern.ID)
+	}
+	return flags
+}
+
+func (a *API) patternDTO(ctx *gin.Context, pattern ds.DendroScalePattern) serializer.PatternDTO {
+	return serializer.Pattern(pattern, a.Repo.CountLikes(pattern.ID), a.likedFlag(ctx, pattern.ID))
+}
+
 func (a *API) ListPatterns(ctx *gin.Context) {
 	patterns, err := a.Repo.ListPublished(parseYearFromDate(ctx.Query("date_from")), parseYearFromDate(ctx.Query("date_to")))
 	if err != nil {
@@ -60,7 +87,7 @@ func (a *API) ListPatterns(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "ошибка получения списка"})
 		return
 	}
-	ctx.JSON(http.StatusOK, serializer.Patterns(patterns, a.likeMap(patterns)))
+	ctx.JSON(http.StatusOK, serializer.Patterns(patterns, a.likeMap(patterns), a.likedMap(ctx, patterns)))
 }
 
 func (a *API) GetFeed(ctx *gin.Context) {
@@ -90,11 +117,11 @@ func (a *API) GetFeed(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, serializer.MessageDTO{Message: "паттерн не найден или удалён"})
 		return
 	}
-	ctx.JSON(http.StatusOK, serializer.Pattern(pattern, a.Repo.CountLikes(pattern.ID)))
+	ctx.JSON(http.StatusOK, a.patternDTO(ctx, pattern))
 }
 
 func (a *API) GetDraft(ctx *gin.Context) {
-	creatorID, err := a.currentCreatorID()
+	creatorID, err := a.currentCreatorID(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "создатель не найден"})
 		return
@@ -104,11 +131,11 @@ func (a *API) GetDraft(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, serializer.MessageDTO{Message: "черновик не найден"})
 		return
 	}
-	ctx.JSON(http.StatusOK, serializer.Pattern(pattern, a.Repo.CountLikes(pattern.ID)))
+	ctx.JSON(http.StatusOK, a.patternDTO(ctx, pattern))
 }
 
 func (a *API) CreatePattern(ctx *gin.Context) {
-	creatorID, err := a.currentCreatorID()
+	creatorID, err := a.currentCreatorID(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "создатель не найден"})
 		return
@@ -146,7 +173,7 @@ func (a *API) CreatePattern(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "не удалось создать черновик"})
 		return
 	}
-	ctx.JSON(http.StatusCreated, serializer.Pattern(pattern, a.Repo.CountLikes(pattern.ID)))
+	ctx.JSON(http.StatusCreated, a.patternDTO(ctx, pattern))
 }
 
 type publishBody struct {
@@ -157,7 +184,7 @@ type publishBody struct {
 }
 
 func (a *API) PublishPattern(ctx *gin.Context) {
-	creatorID, err := a.currentCreatorID()
+	creatorID, err := a.currentCreatorID(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "создатель не найден"})
 		return
@@ -178,7 +205,7 @@ func (a *API) PublishPattern(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, serializer.MessageDTO{Message: err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, serializer.Pattern(pattern, a.Repo.CountLikes(pattern.ID)))
+	ctx.JSON(http.StatusOK, a.patternDTO(ctx, pattern))
 }
 
 func (a *API) DeletePattern(ctx *gin.Context) {
@@ -200,7 +227,7 @@ func (a *API) LikePattern(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, serializer.MessageDTO{Message: "некорректный id"})
 		return
 	}
-	creatorID, err := a.currentCreatorID()
+	creatorID, err := a.currentCreatorID(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "создатель не найден"})
 		return
@@ -231,7 +258,7 @@ func (a *API) LikePattern(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, serializer.MessageDTO{Message: "лайк обновлён"})
 		return
 	}
-	ctx.JSON(http.StatusOK, serializer.Pattern(pattern, a.Repo.CountLikes(pattern.ID)))
+	ctx.JSON(http.StatusOK, a.patternDTO(ctx, pattern))
 }
 
 func (a *API) RegisterResearcher(ctx *gin.Context) {
@@ -257,9 +284,41 @@ func (a *API) RegisterResearcher(ctx *gin.Context) {
 }
 
 func (a *API) LoginResearcher(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, serializer.MessageDTO{Message: "аутентификация будет в лабораторной 4"})
+	var body struct {
+		Login    string `json:"login" form:"login"`
+		Password string `json:"password" form:"password"`
+	}
+	if strings.Contains(ctx.GetHeader("Content-Type"), "application/json") {
+		if err := ctx.ShouldBindJSON(&body); err != nil {
+			ctx.JSON(http.StatusBadRequest, serializer.MessageDTO{Message: "некорректный JSON"})
+			return
+		}
+	} else {
+		_ = ctx.ShouldBind(&body)
+	}
+	researcher, err := a.Repo.FindResearcherByLogin(body.Login)
+	if err != nil || repository.CheckResearcherPassword(researcher, body.Password) != nil {
+		ctx.JSON(http.StatusForbidden, serializer.MessageDTO{Message: "неверный логин или пароль"})
+		return
+	}
+	token, expires, err := a.Tokens.Issue(researcher)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "не удалось выдать токен"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"access_token": token,
+		"token_type":   "Bearer",
+		"expires_in":   int(time.Until(expires).Seconds()),
+		"login":        researcher.Login,
+	})
 }
 
 func (a *API) LogoutResearcher(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, serializer.MessageDTO{Message: "деавторизация будет в лабораторной 4"})
+	if err := a.Gate.Revoke(ctx); err != nil {
+		log.Println(err)
+		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "не удалось выйти"})
+		return
+	}
+	ctx.JSON(http.StatusOK, serializer.MessageDTO{Message: "токен добавлен в чёрный список Redis"})
 }

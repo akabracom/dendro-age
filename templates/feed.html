@@ -18,15 +18,19 @@
             <aside class="feed__rail">
                 <div class="feed__stat">
                     <span class="feed__stat-label">Год начала</span>
-                    <span class="feed__stat-value">{{ .DendroScalePattern.EventYear }}</span>
+                    <span class="feed__stat-value">{{ .DendroScalePattern.YearText }}</span>
                 </div>
                 <div class="feed__stat">
                     <span class="feed__stat-label">Кольца</span>
-                    <span class="feed__stat-value">{{ .DendroScalePattern.RingCount }}</span>
+                    <span class="feed__stat-value">{{ .DendroScalePattern.RingText }}</span>
                 </div>
                 <div class="feed__icon-block">
                     <span class="feed__heart" aria-hidden="true"></span>
                     <span>{{ .DendroScalePattern.LikeCount }}</span>
+                </div>
+                <div class="feed__stat">
+                    <span class="feed__stat-label">Мой лайк</span>
+                    <span class="feed__stat-value">{{ .Liked }}</span>
                 </div>
                 <a class="feed__next" href="/dendro_scale_patterns/feed/{{ .DendroScalePattern.ID }}?next=true">Следующий</a>
             </aside>

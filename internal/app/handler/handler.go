@@ -24,14 +24,20 @@ func NewHandler(r *repository.Repository) *Handler {
 type patternView struct {
 	ds.DendroScalePattern
 	LikeCount int
+	Liked     int
 	ImageSrc  string
 	VideoSrc  string
 }
 
 func (h *Handler) toView(pattern ds.DendroScalePattern) patternView {
+	liked := 0
+	if creatorID, err := h.currentCreatorID(); err == nil && h.Repository.HasLike(creatorID, pattern.ID) {
+		liked = 1
+	}
 	return patternView{
 		DendroScalePattern: pattern,
 		LikeCount:          h.Repository.CountLikes(pattern.ID),
+		Liked:              liked,
 		ImageSrc:           repository.ResolveMedia(pattern.ImageURL, repository.DefaultImagePath),
 		VideoSrc:           repository.ResolveMedia(pattern.VideoURL, repository.DefaultVideoPath),
 	}

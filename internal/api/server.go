@@ -6,10 +6,12 @@ import (
 	"net/http"
 
 	"dendro-age/internal/app/apihandler"
+	"dendro-age/internal/app/auth"
 	"dendro-age/internal/app/config"
 	"dendro-age/internal/app/dsn"
 	"dendro-age/internal/app/handler"
 	"dendro-age/internal/app/miniofile"
+	"dendro-age/internal/app/redisblk"
 	"dendro-age/internal/app/repository"
 
 	"github.com/gin-gonic/gin"
@@ -35,8 +37,15 @@ func StartServer() {
 		log.Fatal(err)
 	}
 
+	block, err := redisblk.NewFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	tokens := auth.NewTokensFromEnv()
+	gate := auth.NewGate(tokens, block)
+
 	h := handler.NewHandler(repo)
-	api := apihandler.New(repo, minioClient)
+	api := apihandler.New(repo, minioClient, tokens, gate)
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./static")
@@ -53,20 +62,30 @@ func StartServer() {
 		ctx.Redirect(http.StatusFound, "/dendro_scale_patterns/feed")
 	})
 
-	apiGroup := r.Group("/api")
-	{
-		apiGroup.GET("/dendro_scale_patterns", api.ListPatterns)
-		apiGroup.GET("/dendro_scale_patterns/feed", api.GetFeed)
-		apiGroup.GET("/dendro_scale_patterns/feed/:id", api.GetFeed)
-		apiGroup.GET("/dendro_scale_patterns/draft", api.GetDraft)
-		apiGroup.POST("/dendro_scale_patterns", api.CreatePattern)
-		apiGroup.PUT("/dendro_scale_patterns/publish", api.PublishPattern)
-		apiGroup.DELETE("/dendro_scale_patterns/:id", api.DeletePattern)
-		apiGroup.POST("/dendro_scale_patterns/:id/like", api.LikePattern)
+	r.GET("/swagger", func(ctx *gin.Context) {
+		ctx.File("./docs/swagger.html")
+	})
+	r.StaticFile("/swagger/openapi.json", "./docs/openapi.json")
 
-		apiGroup.POST("/dendro_researchers/register", api.RegisterResearcher)
-		apiGroup.POST("/dendro_researchers/login", api.LoginResearcher)
-		apiGroup.POST("/dendro_researchers/logout", api.LogoutResearcher)
+	apiGroup := r.Group("/api")
+	publicRead := apiGroup.Group("", gate.Optional)
+	{
+		publicRead.GET("/dendro_scale_patterns", api.ListPatterns)
+		publicRead.GET("/dendro_scale_patterns/feed", api.GetFeed)
+		publicRead.GET("/dendro_scale_patterns/feed/:id", api.GetFeed)
+	}
+
+	apiGroup.POST("/dendro_researchers/register", api.RegisterResearcher)
+	apiGroup.POST("/dendro_researchers/login", api.LoginResearcher)
+
+	creator := apiGroup.Group("", gate.Required)
+	{
+		creator.GET("/dendro_scale_patterns/draft", api.GetDraft)
+		creator.POST("/dendro_scale_patterns", api.CreatePattern)
+		creator.PUT("/dendro_scale_patterns/publish", api.PublishPattern)
+		creator.DELETE("/dendro_scale_patterns/:id", api.DeletePattern)
+		creator.POST("/dendro_scale_patterns/:id/like", api.LikePattern)
+		creator.POST("/dendro_researchers/logout", api.LogoutResearcher)
 	}
 
 	addr := fmt.Sprintf("%s:%d", cfg.ServiceHost, cfg.ServicePort)

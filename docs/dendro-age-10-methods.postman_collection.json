@@ -1,0 +1,148 @@
+{
+  "info": {
+    "name": "Dendro Age — 10 методов",
+    "description": "Лаба 4. Ровно 10 запросов. Сначала отправь запрос 10: Postman сохранит access_token. Запросы 2, 3, 4, 7 и 8 ходят с Authorization: Bearer. Чтение списка и ленты работает без токена. Импорт: Postman → Import.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "access_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1 GET список паттернов с фильтром",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8088/api/dendro_scale_patterns?date_from=1700-01-01&date_to=2000-12-31"
+      }
+    },
+    {
+      "name": "2 POST добавить паттерн с фото и видео",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "title", "value": "API frost ring 1695", "type": "text" },
+            { "key": "image", "type": "file", "src": "" },
+            { "key": "video", "type": "file", "src": "" }
+          ]
+        },
+        "url": "http://localhost:8088/api/dendro_scale_patterns"
+      }
+    },
+    {
+      "name": "3 GET черновик паттерна",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "http://localhost:8088/api/dendro_scale_patterns/draft"
+      }
+    },
+    {
+      "name": "4 PUT опубликовать паттерн",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"short_description\": \"Узкие кольца мороза 1695 года.\",\n  \"full_description\": \"Кластер из четырёх колец фиксирует холодный сезон и используется как репер дендрошкалы.\",\n  \"event_year\": 1695,\n  \"ring_count\": 4\n}"
+        },
+        "url": "http://localhost:8088/api/dendro_scale_patterns/publish"
+      }
+    },
+    {
+      "name": "5 GET лента без id",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8088/api/dendro_scale_patterns/feed",
+        "description": "Без токена liked=0. Если вставить Bearer из запроса 10, liked покажет лайк этого исследователя. like_count — сколько лайков всего."
+      }
+    },
+    {
+      "name": "6 GET лента по id next=true",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8088/api/dendro_scale_patterns/feed/4?next=true",
+        "description": "Открывает следующий опубликованный паттерн после id=4. В ответе тоже есть liked: 0 или 1."
+      }
+    },
+    {
+      "name": "7 POST лайк 1 или 0",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"like\": 1\n}"
+        },
+        "url": "http://localhost:8088/api/dendro_scale_patterns/4/like",
+        "description": "Нужен токен из запроса 10. like=1 ставит лайк исследователя из JWT. Для скрина «другой 0/1» поменяй тело на {\"like\":0}."
+      }
+    },
+    {
+      "name": "8 DELETE удалить паттерн",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "DELETE",
+        "url": "http://localhost:8088/api/dendro_scale_patterns/8",
+        "description": "Подставь id опубликованного паттерна, который можно удалить. Удаление логическое: status становится deleted, строка остаётся."
+      }
+    },
+    {
+      "name": "9 POST регистрация исследователя",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"login\": \"petr_rings\",\n  \"password\": \"petr1234\",\n  \"full_name\": \"Пётр Кольцов\"\n}"
+        },
+        "url": "http://localhost:8088/api/dendro_researchers/register",
+        "description": "Если логин уже есть, поменяй login на новое имя и отправь снова."
+      }
+    },
+    {
+      "name": "10 POST аутентификация JWT",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var json = pm.response.json();",
+              "if (json.access_token) { pm.collectionVariables.set('access_token', json.access_token); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"login\": \"shebe\",\n  \"password\": \"shebe123\"\n}"
+        },
+        "url": "http://localhost:8088/api/dendro_researchers/login",
+        "description": "Ответ: access_token, token_type=Bearer, expires_in. Postman сам кладёт токен в переменную access_token для запросов 2, 3, 4, 7 и 8."
+      }
+    }
+  ]
+}

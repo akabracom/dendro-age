@@ -29,7 +29,7 @@
                     <img class="card__image" src="{{ .ImageSrc }}" alt="{{ .Title }}">
                     <div class="card__shade">
                         <h2 class="card__title">{{ .Title }}</h2>
-                        <p class="card__meta"><span class="card__heart"></span> {{ .LikeCount }} · {{ .EventYear }}</p>
+                        <p class="card__meta"><span class="card__heart"></span> {{ .LikeCount }} · {{ .YearText }}</p>
                     </div>
                 </a>
                 <form class="card-delete" method="post" action="/dendro_scale_patterns/{{ .ID }}/remove">
