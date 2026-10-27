@@ -1,11 +1,15 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Dendro Age API",
+    "title": "Dendro Age API — 10 методов",
     "version": "1.0.0",
-    "description": "Паттерны дендрошкалы. Чтение без токена. Создание, публикация, удаление, лайк, черновик и выход — только с JWT создателя."
+    "description": "Услуга = паттерн дендрошкалы. Пользователь = исследователь. Те же 10 методов, что в коллекции Insomnia/Postman. GET списка и ленты без токена. Остальное — Bearer JWT."
   },
   "servers": [{ "url": "http://localhost:8088" }],
+  "tags": [
+    { "name": "Домен паттерна", "description": "Семь методов услуги" },
+    { "name": "Домен исследователя", "description": "Регистрация, вход, выход" }
+  ],
   "components": {
     "securitySchemes": {
       "bearerAuth": {
@@ -18,17 +22,21 @@
   "paths": {
     "/api/dendro_scale_patterns": {
       "get": {
-        "tags": ["паттерны"],
-        "summary": "Список опубликованных паттернов",
+        "tags": ["Домен паттерна"],
+        "operationId": "01_get_list",
+        "summary": "1 GET список с фильтрацией",
+        "description": "Только опубликованные. Признак mine 0/1: создатель паттерна совпадает с текущим исследователем. Без токена mine=0.",
         "parameters": [
-          { "name": "date_from", "in": "query", "schema": { "type": "string", "format": "date" } },
-          { "name": "date_to", "in": "query", "schema": { "type": "string", "format": "date" } }
+          { "name": "date_from", "in": "query", "schema": { "type": "string", "format": "date", "example": "1700-01-01" } },
+          { "name": "date_to", "in": "query", "schema": { "type": "string", "format": "date", "example": "2000-12-31" } }
         ],
-        "responses": { "200": { "description": "список" } }
+        "responses": { "200": { "description": "массив паттернов, поле mine 0/1" } }
       },
       "post": {
-        "tags": ["паттерны"],
-        "summary": "Создать черновик с фото и видео",
+        "tags": ["Домен паттерна"],
+        "operationId": "04_post_create",
+        "summary": "4 POST добавление с фото и видео",
+        "description": "Файлы, не URL. Имена в полях БД, сами файлы в MinIO, имена латиницей.",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
@@ -38,7 +46,7 @@
                 "type": "object",
                 "required": ["title"],
                 "properties": {
-                  "title": { "type": "string" },
+                  "title": { "type": "string", "example": "API frost ring 1695" },
                   "image": { "type": "string", "format": "binary" },
                   "video": { "type": "string", "format": "binary" }
                 }
@@ -54,34 +62,29 @@
     },
     "/api/dendro_scale_patterns/feed": {
       "get": {
-        "tags": ["паттерны"],
-        "summary": "Лента без id",
-        "responses": { "200": { "description": "первый опубликованный" } }
-      }
-    },
-    "/api/dendro_scale_patterns/feed/{id}": {
-      "get": {
-        "tags": ["паттерны"],
-        "summary": "Лента по id, next=true — следующий",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
-          { "name": "next", "in": "query", "schema": { "type": "boolean" } }
-        ],
-        "responses": { "200": { "description": "паттерн" }, "404": { "description": "не найден" } }
+        "tags": ["Домен паттерна"],
+        "operationId": "02_get_feed",
+        "summary": "2 GET лента",
+        "description": "Только опубликованные. Признак liked 0/1: текущий исследователь лайкнул этот паттерн. like_count — сколько лайков всего.",
+        "responses": { "200": { "description": "паттерн ленты, поле liked 0/1" } }
       }
     },
     "/api/dendro_scale_patterns/draft": {
       "get": {
-        "tags": ["паттерны"],
-        "summary": "Черновик текущего создателя",
+        "tags": ["Домен паттерна"],
+        "operationId": "03_get_draft",
+        "summary": "3 GET черновик",
+        "description": "Не более одной записи для исследователя. Ид в адресе не указывается.",
         "security": [{ "bearerAuth": [] }],
         "responses": { "200": { "description": "черновик" }, "401": { "description": "нет токена" } }
       }
     },
     "/api/dendro_scale_patterns/publish": {
       "put": {
-        "tags": ["паттерны"],
-        "summary": "Опубликовать черновик",
+        "tags": ["Домен паттерна"],
+        "operationId": "05_put_publish",
+        "summary": "5 PUT публикация",
+        "description": "Смена статуса на published.",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
@@ -93,8 +96,8 @@
                 "properties": {
                   "short_description": { "type": "string" },
                   "full_description": { "type": "string" },
-                  "event_year": { "type": "integer" },
-                  "ring_count": { "type": "integer" }
+                  "event_year": { "type": "integer", "example": 1695 },
+                  "ring_count": { "type": "integer", "example": 4 }
                 }
               }
             }
@@ -102,24 +105,28 @@
         },
         "responses": {
           "200": { "description": "опубликован" },
-          "401": { "description": "гость" },
+          "401": { "description": "гость, нет токена" },
           "403": { "description": "токен в blacklist" }
         }
       }
     },
     "/api/dendro_scale_patterns/{id}": {
       "delete": {
-        "tags": ["паттерны"],
-        "summary": "Логическое удаление",
+        "tags": ["Домен паттерна"],
+        "operationId": "06_delete",
+        "summary": "6 DELETE удаление",
+        "description": "Только soft delete. Только паттерны этого исследователя.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "удалён" }, "401": { "description": "нет токена" } }
+        "responses": { "200": { "description": "status=deleted" }, "401": { "description": "нет токена" } }
       }
     },
     "/api/dendro_scale_patterns/{id}/like": {
       "post": {
-        "tags": ["паттерны"],
-        "summary": "Лайк 1 или снятие 0",
+        "tags": ["Домен паттерна"],
+        "operationId": "07_post_like",
+        "summary": "7 POST like",
+        "description": "От текущего исследователя. 1 ставит лайк, 0 отменяет.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
@@ -128,18 +135,19 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": { "like": { "type": "integer", "enum": [0, 1] } }
+                "properties": { "like": { "type": "integer", "enum": [0, 1], "example": 1 } }
               }
             }
           }
         },
-        "responses": { "200": { "description": "лайк обновлён" }, "401": { "description": "нет токена" } }
+        "responses": { "200": { "description": "liked 0/1" }, "401": { "description": "нет токена" } }
       }
     },
     "/api/dendro_researchers/register": {
       "post": {
-        "tags": ["исследователи"],
-        "summary": "Регистрация",
+        "tags": ["Домен исследователя"],
+        "operationId": "08_post_register",
+        "summary": "8 POST регистрация",
         "requestBody": {
           "required": true,
           "content": {
@@ -148,21 +156,23 @@
                 "type": "object",
                 "required": ["login", "password", "full_name"],
                 "properties": {
-                  "login": { "type": "string" },
-                  "password": { "type": "string" },
-                  "full_name": { "type": "string" }
+                  "login": { "type": "string", "example": "petr_rings" },
+                  "password": { "type": "string", "example": "petr1234" },
+                  "full_name": { "type": "string", "example": "Пётр Кольцов" }
                 }
               }
             }
           }
         },
-        "responses": { "201": { "description": "создан" } }
+        "responses": { "201": { "description": "исследователь создан" } }
       }
     },
     "/api/dendro_researchers/login": {
       "post": {
-        "tags": ["исследователи"],
-        "summary": "Аутентификация, выдаёт JWT",
+        "tags": ["Домен исследователя"],
+        "operationId": "09_post_login",
+        "summary": "9 POST аутентификация",
+        "description": "В лабе 3 была заглушка. Сейчас выдаёт JWT.",
         "requestBody": {
           "required": true,
           "content": {
@@ -179,17 +189,22 @@
           }
         },
         "responses": {
-          "200": { "description": "access_token" },
+          "200": { "description": "access_token, token_type Bearer, expires_in" },
           "403": { "description": "неверный логин или пароль" }
         }
       }
     },
     "/api/dendro_researchers/logout": {
       "post": {
-        "tags": ["исследователи"],
-        "summary": "Выход: токен в Redis blacklist",
+        "tags": ["Домен исследователя"],
+        "operationId": "10_post_logout",
+        "summary": "10 POST деавторизация",
+        "description": "В лабе 3 была заглушка. Сейчас токен в Redis blacklist.",
         "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "токен заблокирован" }, "401": { "description": "нет токена" } }
+        "responses": {
+          "200": { "description": "токен заблокирован" },
+          "401": { "description": "нет токена" }
+        }
       }
     }
   }

@@ -17,6 +17,7 @@ type PatternDTO struct {
 	RingCount        *int   `json:"ring_count"`
 	LikeCount        int    `json:"like_count"`
 	Liked            int    `json:"liked"`
+	Mine             int    `json:"mine"`
 	CreatorID        uint   `json:"creator_id"`
 	CreatedAt        string `json:"created_at"`
 	FormedAt         string `json:"formed_at,omitempty"`
@@ -32,7 +33,7 @@ type MessageDTO struct {
 	Message string `json:"message"`
 }
 
-func Pattern(pattern ds.DendroScalePattern, likeCount int, liked int) PatternDTO {
+func Pattern(pattern ds.DendroScalePattern, likeCount int, liked int, mine int) PatternDTO {
 	dto := PatternDTO{
 		ID:               pattern.ID,
 		Title:            pattern.Title,
@@ -45,6 +46,7 @@ func Pattern(pattern ds.DendroScalePattern, likeCount int, liked int) PatternDTO
 		RingCount:        pattern.RingCount,
 		LikeCount:        likeCount,
 		Liked:            liked,
+		Mine:             mine,
 		CreatorID:        pattern.CreatorID,
 		CreatedAt:        pattern.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
@@ -54,10 +56,10 @@ func Pattern(pattern ds.DendroScalePattern, likeCount int, liked int) PatternDTO
 	return dto
 }
 
-func Patterns(patterns []ds.DendroScalePattern, likes map[uint]int, liked map[uint]int) []PatternDTO {
+func Patterns(patterns []ds.DendroScalePattern, likes map[uint]int, liked map[uint]int, mine map[uint]int) []PatternDTO {
 	out := make([]PatternDTO, 0, len(patterns))
 	for _, pattern := range patterns {
-		out = append(out, Pattern(pattern, likes[pattern.ID], liked[pattern.ID]))
+		out = append(out, Pattern(pattern, likes[pattern.ID], liked[pattern.ID], mine[pattern.ID]))
 	}
 	return out
 }

@@ -1,8 +1,28 @@
 Диаграмма последовательности Dendro Age
 =======================================
-Срисовывай как на примере (частицы / users): три колонки,
-сплошные стрелки туда, пунктирные обратно, номера 1…16.
-Без БД, без Redis, без MinIO, без нативного приложения.
+Масштаб: три колонки на А4, шрифт 10–11 pt. Не пиши полный URL
+в две строки на каждой стрелке — ломай имя Message Enter'ом.
+
+Линии жизни — КОРОТКИЕ имена, с переносом внутри бокса:
+  Postman
+  :Researchers
+  :Patterns
+В type/classifier всё равно классы Домен DendroResearchers
+и Домен DendroScalePatterns с диаграммы классов.
+
+На стрелке только хвост пути + скобки:
+  login(login, password)
+  list(date_from, date_to)
+  create(title, image, video)
+  draft()
+  publish(short, year, rings)
+  feed()
+  feed(id, next=true)
+  like(id, like)
+Ответ: JWT / JSON. Не копируй /api/dendro_scale_patterns целиком.
+
+Сплошные туда, пунктир обратно, номера 1…16.
+Без БД, без Redis, без MinIO.
 
 
 ================================================================

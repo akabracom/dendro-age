@@ -76,8 +76,24 @@ func (a *API) likedMap(ctx *gin.Context, patterns []ds.DendroScalePattern) map[u
 	return flags
 }
 
+func (a *API) mineFlag(ctx *gin.Context, creatorID uint) int {
+	id, err := a.currentCreatorID(ctx)
+	if err != nil || id != creatorID {
+		return 0
+	}
+	return 1
+}
+
+func (a *API) mineMap(ctx *gin.Context, patterns []ds.DendroScalePattern) map[uint]int {
+	flags := make(map[uint]int, len(patterns))
+	for _, pattern := range patterns {
+		flags[pattern.ID] = a.mineFlag(ctx, pattern.CreatorID)
+	}
+	return flags
+}
+
 func (a *API) patternDTO(ctx *gin.Context, pattern ds.DendroScalePattern) serializer.PatternDTO {
-	return serializer.Pattern(pattern, a.Repo.CountLikes(pattern.ID), a.likedFlag(ctx, pattern.ID))
+	return serializer.Pattern(pattern, a.Repo.CountLikes(pattern.ID), a.likedFlag(ctx, pattern.ID), a.mineFlag(ctx, pattern.CreatorID))
 }
 
 func (a *API) ListPatterns(ctx *gin.Context) {
@@ -87,7 +103,7 @@ func (a *API) ListPatterns(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "ошибка получения списка"})
 		return
 	}
-	ctx.JSON(http.StatusOK, serializer.Patterns(patterns, a.likeMap(patterns), a.likedMap(ctx, patterns)))
+	ctx.JSON(http.StatusOK, serializer.Patterns(patterns, a.likeMap(patterns), a.likedMap(ctx, patterns), a.mineMap(ctx, patterns)))
 }
 
 func (a *API) GetFeed(ctx *gin.Context) {
@@ -214,7 +230,12 @@ func (a *API) DeletePattern(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, serializer.MessageDTO{Message: "некорректный id"})
 		return
 	}
-	if err := a.Repo.SoftDeletePatternORM(uint(id64)); err != nil {
+	creatorID, err := a.currentCreatorID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, serializer.MessageDTO{Message: "исследователь не авторизован"})
+		return
+	}
+	if err := a.Repo.SoftDeletePatternORM(uint(id64), creatorID); err != nil {
 		ctx.JSON(http.StatusNotFound, serializer.MessageDTO{Message: err.Error()})
 		return
 	}

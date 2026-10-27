@@ -12,7 +12,14 @@
     window.ui = SwaggerUIBundle({
         url: "/swagger/openapi.json",
         dom_id: "#swagger-ui",
-        persistAuthorization: true
+        persistAuthorization: true,
+        tagsSorter: function (a, b) {
+            var order = ["Домен паттерна", "Домен исследователя"];
+            return order.indexOf(a) - order.indexOf(b);
+        },
+        operationsSorter: function (a, b) {
+            return String(a.get("operationId")).localeCompare(String(b.get("operationId")));
+        }
     });
 </script>
 </body>

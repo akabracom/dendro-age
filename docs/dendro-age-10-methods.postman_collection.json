@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Dendro Age — 10 методов",
-    "description": "Лаба 4. Ровно 10 запросов. Сначала отправь запрос 10: Postman сохранит access_token. Запросы 2, 3, 4, 7 и 8 ходят с Authorization: Bearer. Чтение списка и ленты работает без токена. Импорт: Postman → Import.",
+    "description": "Ровно 10 методов из задания. Услуга = паттерн дендрошкалы, пользователь = исследователь. Сначала запрос 9 (вход): Postman сохранит access_token. Без токена работают 1, 2 и 8. Импорт: Postman → Import.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -9,14 +9,43 @@
   ],
   "item": [
     {
-      "name": "1 GET список паттернов с фильтром",
+      "name": "1 GET список с фильтрацией",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
         "method": "GET",
-        "url": "http://localhost:8088/api/dendro_scale_patterns?date_from=1700-01-01&date_to=2000-12-31"
+        "url": "http://localhost:8088/api/dendro_scale_patterns?date_from=1700-01-01&date_to=2000-12-31",
+        "description": "Только опубликованные. Признак mine 0/1: создатель паттерна совпадает с текущим исследователем. Без токена mine=0. Auth можно выключить (No Auth) — список всё равно 200."
       }
     },
     {
-      "name": "2 POST добавить паттерн с фото и видео",
+      "name": "2 GET лента",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "http://localhost:8088/api/dendro_scale_patterns/feed",
+        "description": "Только опубликованные. Признак liked 0/1: текущий исследователь лайкнул этот паттерн. like_count — сколько лайков всего. Это один метод ленты; следующий паттерн — тот же метод с /feed/:id?next=true, отдельным запросом коллекции не считается."
+      }
+    },
+    {
+      "name": "3 GET черновик",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "http://localhost:8088/api/dendro_scale_patterns/draft",
+        "description": "Не более одной записи на исследователя. Ид в адресе не указывается."
+      }
+    },
+    {
+      "name": "4 POST добавление с фото и видео",
       "request": {
         "auth": {
           "type": "bearer",
@@ -31,22 +60,12 @@
             { "key": "video", "type": "file", "src": "" }
           ]
         },
-        "url": "http://localhost:8088/api/dendro_scale_patterns"
+        "url": "http://localhost:8088/api/dendro_scale_patterns",
+        "description": "Файлы, не URL. Имена пишутся в поля БД, файлы в MinIO, имена латиницей."
       }
     },
     {
-      "name": "3 GET черновик паттерна",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
-        },
-        "method": "GET",
-        "url": "http://localhost:8088/api/dendro_scale_patterns/draft"
-      }
-    },
-    {
-      "name": "4 PUT опубликовать паттерн",
+      "name": "5 PUT публикация",
       "request": {
         "auth": {
           "type": "bearer",
@@ -58,27 +77,24 @@
           "mode": "raw",
           "raw": "{\n  \"short_description\": \"Узкие кольца мороза 1695 года.\",\n  \"full_description\": \"Кластер из четырёх колец фиксирует холодный сезон и используется как репер дендрошкалы.\",\n  \"event_year\": 1695,\n  \"ring_count\": 4\n}"
         },
-        "url": "http://localhost:8088/api/dendro_scale_patterns/publish"
+        "url": "http://localhost:8088/api/dendro_scale_patterns/publish",
+        "description": "Смена статуса на published. Без токена 401."
       }
     },
     {
-      "name": "5 GET лента без id",
+      "name": "6 DELETE удаление",
       "request": {
-        "method": "GET",
-        "url": "http://localhost:8088/api/dendro_scale_patterns/feed",
-        "description": "Без токена liked=0. Если вставить Bearer из запроса 10, liked покажет лайк этого исследователя. like_count — сколько лайков всего."
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "DELETE",
+        "url": "http://localhost:8088/api/dendro_scale_patterns/8",
+        "description": "Только soft delete. Только паттерны этого исследователя. Подставь свой id."
       }
     },
     {
-      "name": "6 GET лента по id next=true",
-      "request": {
-        "method": "GET",
-        "url": "http://localhost:8088/api/dendro_scale_patterns/feed/4?next=true",
-        "description": "Открывает следующий опубликованный паттерн после id=4. В ответе тоже есть liked: 0 или 1."
-      }
-    },
-    {
-      "name": "7 POST лайк 1 или 0",
+      "name": "7 POST like",
       "request": {
         "auth": {
           "type": "bearer",
@@ -91,23 +107,11 @@
           "raw": "{\n  \"like\": 1\n}"
         },
         "url": "http://localhost:8088/api/dendro_scale_patterns/4/like",
-        "description": "Нужен токен из запроса 10. like=1 ставит лайк исследователя из JWT. Для скрина «другой 0/1» поменяй тело на {\"like\":0}."
+        "description": "От текущего исследователя. 1 ставит лайк, 0 отменяет. Подставь id из ленты."
       }
     },
     {
-      "name": "8 DELETE удалить паттерн",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
-        },
-        "method": "DELETE",
-        "url": "http://localhost:8088/api/dendro_scale_patterns/8",
-        "description": "Подставь id опубликованного паттерна, который можно удалить. Удаление логическое: status становится deleted, строка остаётся."
-      }
-    },
-    {
-      "name": "9 POST регистрация исследователя",
+      "name": "8 POST регистрация",
       "request": {
         "method": "POST",
         "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -116,11 +120,11 @@
           "raw": "{\n  \"login\": \"petr_rings\",\n  \"password\": \"petr1234\",\n  \"full_name\": \"Пётр Кольцов\"\n}"
         },
         "url": "http://localhost:8088/api/dendro_researchers/register",
-        "description": "Если логин уже есть, поменяй login на новое имя и отправь снова."
+        "description": "Если логин занят — поменяй login и отправь снова."
       }
     },
     {
-      "name": "10 POST аутентификация JWT",
+      "name": "9 POST аутентификация",
       "event": [
         {
           "listen": "test",
@@ -141,7 +145,19 @@
           "raw": "{\n  \"login\": \"shebe\",\n  \"password\": \"shebe123\"\n}"
         },
         "url": "http://localhost:8088/api/dendro_researchers/login",
-        "description": "Ответ: access_token, token_type=Bearer, expires_in. Postman сам кладёт токен в переменную access_token для запросов 2, 3, 4, 7 и 8."
+        "description": "Для лабы 3 это была заглушка, для лабы 4 — JWT. Ответ: access_token, token_type=Bearer, expires_in. Отправь этот запрос до 3–7 и 10."
+      }
+    },
+    {
+      "name": "10 POST деавторизация",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "POST",
+        "url": "http://localhost:8088/api/dendro_researchers/logout",
+        "description": "Для лабы 3 это была заглушка, для лабы 4 токен попадает в Redis blacklist. Повтор с тем же токеном — 403."
       }
     }
   ]

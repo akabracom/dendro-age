@@ -68,26 +68,25 @@ go run ./cmd/dendro-age
 
 Пара `(researcher_id, pattern_id)` уникальна. Удаление связей каскадом запрещено.
 
-## Лаба 3, десять методов
+## Лаба 3–4, десять методов
 
-Коллекция: `docs/dendro-age-10-methods.postman_collection.json`. Создатель в API берётся из JWT. HTML-страницы по-прежнему открываются от `shebe`.
+Коллекция: `docs/dendro-age-10-methods.postman_collection.json`. Услуга = паттерн дендрошкалы, пользователь = исследователь.
 
-| № | Метод | URL | Что делает |
-|---|---|---|---|
-| 1 | GET | `/api/dendro_scale_patterns?date_from=&date_to=` | Список опубликованных. Фильтр по году из календарных дат. Удалённые не отдаются |
-| 2 | POST | `/api/dendro_scale_patterns` | Черновик. Multipart: `title`, `image`, `video`. Файлы в MinIO, имена латиницей |
-| 3 | GET | `/api/dendro_scale_patterns/draft` | Черновик текущего создателя, id в адресе нет |
-| 4 | PUT | `/api/dendro_scale_patterns/publish` | Публикация: краткое описание, год начала, число колец. Статус ставит сервер |
-| 5 | GET | `/api/dendro_scale_patterns/feed` | Лента без id: первый опубликованный |
-| 6 | GET | `/api/dendro_scale_patterns/feed/:id?next=true` | Лента с этого id или следующий при `next=true` |
-| 7 | POST | `/api/dendro_scale_patterns/:id/like` | Тело `{"like":1}` ставит лайк, `{"like":0}` снимает |
-| 8 | DELETE | `/api/dendro_scale_patterns/:id` | Логическое удаление, статус `deleted` |
-| 9 | POST | `/api/dendro_researchers/register` | Регистрация: `login`, `password`, `full_name` |
-| 10 | POST | `/api/dendro_researchers/login` | Вход: `login` и `password`. Ответ — JWT |
+### Домен паттерна дендрошкалы
 
-В ленте и в списке два разных числа: `like_count` — сколько лайков всего, `liked` — `0` или `1`, лайкнул ли исследователь из токена. Без токена `liked` равен `0`.
+- **GET** список с фильтрацией (только опубликованные). Признак 0/1, если создатель паттерна совпадает с текущим исследователем. Поле `mine`. `/api/dendro_scale_patterns?date_from=&date_to=`
+- **GET** лента (только опубликованные). Признак 0/1, если текущий исследователь лайкнул этот паттерн. Поле `liked`. `/api/dendro_scale_patterns/feed`
+- **GET** получения черновика (не более 1 записи для исследователя), ид не указывается. `/api/dendro_scale_patterns/draft`
+- **POST** добавление + добавление файлов изображения и короткого видео (как файлы, а не просто URL). Названия файлов сохраняются в полях БД, сами файлы в MinIO. Названия генерируются на латинице. `/api/dendro_scale_patterns`
+- **PUT** публикации (смена статуса). `/api/dendro_scale_patterns/publish`
+- **DELETE** удаление (только soft delete). Только паттерны этого исследователя. `/api/dendro_scale_patterns/:id`
+- **POST** like (от текущего исследователя). Поле 0/1 (`0` отменяет лайк, `1` ставит). `/api/dendro_scale_patterns/:id/like`
 
-Деавторизация: `POST /api/dendro_researchers/logout` — токен попадает в Redis blacklist.
+### Домен исследователя
+
+- **POST** регистрация. `/api/dendro_researchers/register`
+- **POST** аутентификация. `/api/dendro_researchers/login`
+- **POST** деавторизация. `/api/dendro_researchers/logout`
 
 ## Лаба 4
 

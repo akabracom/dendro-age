@@ -247,10 +247,10 @@ func (r *Repository) CreateDraftWithMedia(creatorID uint, title, imageURL, video
 	return pattern, nil
 }
 
-func (r *Repository) SoftDeletePatternORM(id uint) error {
+func (r *Repository) SoftDeletePatternORM(id, creatorID uint) error {
 	var pattern ds.DendroScalePattern
-	if err := r.db.Where("id = ? AND status <> ?", id, ds.StatusDeleted).First(&pattern).Error; err != nil {
-		return fmt.Errorf("паттерн %d не найден", id)
+	if err := r.db.Where("id = ? AND creator_id = ? AND status <> ?", id, creatorID, ds.StatusDeleted).First(&pattern).Error; err != nil {
+		return fmt.Errorf("паттерн %d не найден или принадлежит другому исследователю", id)
 	}
 	pattern.Status = ds.StatusDeleted
 	return r.db.Save(&pattern).Error

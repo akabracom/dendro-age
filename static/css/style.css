@@ -65,13 +65,26 @@ textarea {
     background: #000;
 }
 
+.topbar {
+    background: var(--color-nav);
+    color: #fff;
+    margin: -20px -20px 16px;
+    padding: 16px 20px;
+}
+
+.topbar__title,
 .page-title {
-    margin: 8px 0 4px;
-    font-size: 28px;
+    margin: 0;
+    font-size: 22px;
     line-height: 1.15;
     font-weight: 800;
     letter-spacing: -0.04em;
-    color: var(--color-heading);
+    color: #fff;
+}
+
+.page-title {
+    margin: 8px 0 4px;
+    color: #fff;
 }
 
 .page-sub {
@@ -222,6 +235,7 @@ textarea {
     line-height: 1.15;
     font-weight: 700;
     font-family: var(--font);
+    color: #fff;
 }
 
 .feed__short,

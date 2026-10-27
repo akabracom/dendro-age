@@ -11,8 +11,10 @@
 </head>
 <body>
 <div class="phone">
+    <header class="topbar">
+        <h1 class="topbar__title">Черновик паттерна</h1>
+    </header>
     <main class="draft">
-        <h1 class="page-title">Черновик паттерна</h1>
         {{ if .HasDraft }}
         <p class="page-sub">Заполните поля по теме и опубликуйте</p>
         <form class="draft__form" action="/dendro_scale_patterns/draft/publish" method="post">

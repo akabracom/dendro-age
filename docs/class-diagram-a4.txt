@@ -1,198 +1,145 @@
-Диаграмма классов Dendro Age — как на примере с Postman
-=======================================================
-Лист А4, книжная ориентация. Шрифт 8 pt. Всё на одном листе.
-
-Схема такая же, как на образце: сверху клиент, ниже веб-сервис
-с доменами, ещё ниже модели, внизу таблицы БД.
-
-
+Диаграмма классов — шахматно, А4 книжный, ничего не пересекается
 ================================================================
-КАК ДОЛЖНО ВЫГЛЯДЕТЬ (чертеж для срисовки в StarUML)
-================================================================
-
-                              +-----------+
-                              |  Postman  |
-                              +-----------+
-                                 |     |
-                    -------------       -------------
-                    |                               |
-                   (o)                             (o)
-           API DendroScalePatterns         API DendroResearchers
-                    |                               |
-                    v                               v
-+---------------------------------------------------------------+
-|                         Веб-сервис                            |
-|                                                               |
-|  +--------------------------------+  +----------------------+ |
-|  | Домен DendroScalePatterns      |  | Домен                | |
-|  |--------------------------------|  | DendroResearchers    | |
-|  | +GET    /api/dendro_scale_     |  |----------------------| |
-|  |         patterns               |  | +POST /api/dendro_   | |
-|  |         (?date_from,&date_to)  |  |      researchers/    | |
-|  | +GET    /api/dendro_scale_     |  |      register        | |
-|  |         patterns/feed          |  | +POST /api/dendro_   | |
-|  | +GET    /api/dendro_scale_     |  |      researchers/    | |
-|  |         patterns/feed/:id      |  |      login           | |
-|  |         (?next=true)           |  | +POST /api/dendro_   | |
-|  | +GET    /api/dendro_scale_     |  |      researchers/    | |
-|  |         patterns/draft         |  |      logout          | |
-|  | +POST   /api/dendro_scale_     |  +----------------------+ |
-|  |         patterns               |                           |
-|  |         (title,image,video)    |                           |
-|  | +PUT    /api/dendro_scale_     |                           |
-|  |         patterns/publish       |                           |
-|  | +DELETE /api/dendro_scale_     |                           |
-|  |         patterns/:id           |                           |
-|  | +POST   /api/dendro_scale_     |                           |
-|  |         patterns/:id/like      |                           |
-|  |         (like: 0|1)            |                           |
-|  +--------------------------------+                           |
-|                                                               |
-|  Note: singleton currentresearcher.Login() = "shebe"          |
-+---------------------------------------------------------------+
-           |                    |                    |
-           |                    |                    |
-           v                    v                    v
-+------------------+  +---------------------+  +------------------+
-|      Модель      |  |       Модель        |  |      Модель      |
-|------------------|  |---------------------|  |------------------|
-| DendroResearcher |  | DendroScalePattern  |  | DendroPatternLike|
-|------------------|  |---------------------|  |------------------|
-| id               |  | id                  |  | id               |
-| login            |  | title               |  | researcherId     |
-| password         |  | shortDescription    |  | patternId        |
-| fullName         |  | fullDescription     |  +------------------+
-+------------------+  | status              |
-                      | imageUrl            |
-                      | videoUrl            |
-                      | eventYear           |
-                      | ringCount           |
-                      | createdAt           |
-                      | formedAt            |
-                      | creatorId           |
-                      +---------------------+
-           |                    |                    |
-           |                    |                    |
-           v                    v                    v
-+---------------------------------------------------------------+
-|                        База данных                            |
-|                                                               |
-|  +--------------------+     +---------------------------+     |
-|  | dendro_researchers |     | dendro_scale_patterns     |     |
-|  |--------------------|     |---------------------------|     |
-|  | PK id              |     | PK id                     |     |
-|  |    login           |---->| FK creator_id             |     |
-|  |    password        |     |    title                  |     |
-|  |    full_name       |     |    status                 |     |
-|  +--------------------+     |    image_url (NULL)       |     |
-|            |                |    video_url (NULL)       |     |
-|            |                |    short_description NULL |     |
-|            |                |    event_year NULL        |     |
-|            |                |    ring_count NULL        |     |
-|            |                |    formed_at NULL         |     |
-|            |                +---------------------------+     |
-|            |                            |                     |
-|            |                            |                     |
-|            v                            v                     |
-|         +------------------------------------------+          |
-|         |         dendro_pattern_likes             |          |
-|         |------------------------------------------|          |
-|         | PK id                                    |          |
-|         | FK researcher_id  -> dendro_researchers  |          |
-|         | FK pattern_id     -> dendro_scale_patterns|         |
-|         +------------------------------------------+          |
-+---------------------------------------------------------------+
+Верхняя полоска КАЖДОГО класса: заливка #1c1c1c, шрифт имени БЕЛЫЙ.
+Нижняя полоска: белая, операции или атрибуты чёрным.
+Шрифт 8 pt. Стрелки без подписей и без 1/*.
 
 
-================================================================
-ЧТО РИСОВАТЬ В STARUML ПО СЛОЯМ
-================================================================
+ШАХМАТНАЯ СЕТКА (не ставь всё в один столбец)
 
-1) Сверху класс Postman (клиент).
+Ряд 0. Четыре страницы — классы с ДВУМЯ полосками, 2 клетки × 2 клетки:
 
-2) От Postman две стрелки вниз к интерфейсам (кружки / lollipop
-   или класс со стереотипом <<interface>>):
-     API DendroScalePatterns
-     API DendroResearchers
+   +------------------+     +------------------+
+   | FeedPage         |     | MosaicPage       |     <- тёмная, белый текст
+   |------------------|     |------------------|
+   | +openFeed()      |     | +openList()      |
+   | +openNext()      |     | +filterByDate()  |
+   +------------------+     +------------------+
 
-3) Большой Package / Frame с названием «Веб-сервис».
-   Внутри два класса-домена с двумя полосками (имя + операции).
-   Методы пиши как в таблице ниже, с HTTP-глаголом.
+   +------------------+     +------------------+
+   | DraftPage        |     | NotFoundPage     |
+   |------------------|     |------------------|
+   | +openDraft()     |     | +showMissing()   |
+   | +submitNext()    |     |                  |
+   | +submitPublish() |     |                  |
+   +------------------+     +------------------+
 
-4) Ниже Package «Модель»:
-     DendroResearcher
-     DendroScalePattern
-     DendroPatternLike
-   Пунктирные стрелки Dependency:
-     Домен DendroScalePatterns --> DendroScalePattern
-     Домен DendroScalePatterns --> DendroPatternLike
-     Домен DendroResearchers   --> DendroResearcher
-
-5) Внизу Package «База данных»:
-     таблицы как классы <<table>> или ER Entity.
-     Пунктир от модели к своей таблице.
-     Между таблицами обычные связи FK, без подписей имён,
-     без цифр 1 и * (по замечанию к ER).
-
-6) Маленький Note у веб-сервиса:
-     singleton Login() = shebe
-     используется в draft, create, publish, like
+Страницы чуть левее. Справа от них — клиент и веб-сервис.
 
 
-================================================================
-МЕТОДЫ ДОМЕНОВ (скопируй в операции классов)
-================================================================
+Ряд 1. Клиент по центру правой половины:
+
+              +---------+
+              | Postman |
+              +---------+
+                 /   \
+          Usage /     \ Usage
+               v       v
+             ( o )   ( o )
+   API DendroScale   API Dendro
+      Patterns       Researchers
+
+Кружок = Provided Interface / lollipop. НЕ класс-прямоугольник.
+Не пиши внутри кружка длинный текст.
+
+
+Ряд 2. Домены — два квадрата рядом, не наезжают:
+
+   +---------------------------+  +----------------------+
+   | Домен DendroScalePatterns |  | Домен DendroResearchers
+   |---------------------------|  |----------------------|
+   | +GET  .../patterns        |  | +POST .../register   |
+   | +GET  .../feed            |  | +POST .../login      |
+   | +GET  .../feed/:id        |  | +POST .../logout     |
+   | +GET  .../draft           |  +----------------------+
+   | +POST .../patterns        |
+   | +PUT  .../publish         |
+   | +DELETE .../:id           |
+   | +POST .../:id/like        |
+   +---------------------------+
+
+От кружка вниз к своему домену: Interface Realization (сплошная, треугольник).
+
+
+Ряд 3. Модели — три квадрата в шахматку, средний чуть ниже,
+чтобы стрелки не пересекались:
+
+   +------------------+          +------------------+
+   | Модель           |          | Модель           |
+   | DendroResearcher |          | DendroPatternLike|
+   |------------------|          |------------------|
+   | id               |          | id               |
+   | login            |          | researcherId     |
+   | password         |          | patternId        |
+   | fullName         |          +------------------+
+   +------------------+
+              +----------------------+
+              | Модель               |
+              | DendroScalePattern   |
+              |----------------------|
+              | id title status      |
+              | imageUrl videoUrl    |
+              | eventYear ringCount  |
+              | creatorId            |
+              +----------------------+
+
+Пунктир Dependency: домен паттернов → Pattern и Like;
+домен исследователей → Researcher.
+
+
+Ряд 4. Таблицы — три квадрата <<table>>, компактные, как ER:
+
+   +--------------------+     +-------------------------+
+   | dendro_researchers |     | dendro_scale_patterns   |
+   |--------------------|     |-------------------------|
+   | PK id              |     | PK id                   |
+   | login password     |     | title status creator_id |
+   | full_name          |     | image_url NULL          |
+   +--------------------+     | video_url NULL          |
+                              | event_year NULL         |
+                              | ring_count NULL         |
+                              +-------------------------+
+                 +------------------------+
+                 | dendro_pattern_likes   |
+                 |------------------------|
+                 | PK id                  |
+                 | FK researcher_id       |
+                 | FK pattern_id          |
+                 +------------------------+
+
+Пунктир модель → своя таблица. Между таблицами сплошная без 1/*.
+
+
+КАК УБРАТЬ ПЕРЕСЕЧЕНИЯ
+1. Включи Snap to Grid.
+2. Между рядами пустая полоса высотой с один класс.
+3. Не тяни длинные диагонали через весь лист: сначала вниз, потом вбок
+   (Rectilinear / orthogonal в StarUML).
+4. Страницы только слева, сервис справа. Модели не клади под страницами
+   в ту же клетку.
+
+
+ИНТЕРФЕЙСЫ «НОРМАЛЬНО»
+Toolbox → Interface (кружок) ИЛИ Port + Provided Interface.
+Имя кружка: API DendroScalePatterns / API DendroResearchers.
+Postman  --Usage-->  кружок  --Realization-->  класс домена.
+Не рисуй интерфейс как третий большой класс с методами — методы только
+у домена.
+
+
+ОПЕРАЦИИ ДОМЕНОВ (коротко, полный путь в signature)
 
 Домен DendroScalePatterns
-  + GET    /api/dendro_scale_patterns
-  + GET    /api/dendro_scale_patterns/feed
-  + GET    /api/dendro_scale_patterns/feed/:id
-  + GET    /api/dendro_scale_patterns/draft
-  + POST   /api/dendro_scale_patterns
-  + PUT    /api/dendro_scale_patterns/publish
-  + DELETE /api/dendro_scale_patterns/:id
-  + POST   /api/dendro_scale_patterns/:id/like
+  GET /api/dendro_scale_patterns
+  GET /api/dendro_scale_patterns/feed
+  GET /api/dendro_scale_patterns/feed/:id
+  GET /api/dendro_scale_patterns/draft
+  POST /api/dendro_scale_patterns
+  PUT /api/dendro_scale_patterns/publish
+  DELETE /api/dendro_scale_patterns/:id
+  POST /api/dendro_scale_patterns/:id/like
 
 Домен DendroResearchers
-  + POST /api/dendro_researchers/register
-  + POST /api/dendro_researchers/login
-  + POST /api/dendro_researchers/logout
-
-
-================================================================
-СТРАНИЦЫ SSR (если преподаватель просит 4 страницы на той же диаграмме)
-================================================================
-Отдельный маленький столбец слева от веб-сервиса, классы
-с двумя полосками:
-
-FeedPage
-  openFeed()
-  openNext()
-
-MosaicPage
-  openList()
-  filterByDate()
-
-DraftPage
-  openDraft()
-  submitNext()
-  submitPublish()
-
-NotFoundPage
-  showMissing()
-
-От страниц пунктир к Домену DendroScalePatterns
-(страницы ходят в SSR-обработчики, а SPA потом будет в API).
-
-
-================================================================
-ПОРЯДОК НА ЛИСТЕ А4 СВЕРХУ ВНИЗ
-================================================================
-1. Postman
-2. два интерфейса-кружка
-3. рамка Веб-сервис с двумя доменами
-4. рамка Модель с тремя классами
-5. рамка База данных с тремя таблицами
-
-Не пиши названия на стрелках. Не ставь 1 и * на концах.
-)
+  POST /api/dendro_researchers/register
+  POST /api/dendro_researchers/login
+  POST /api/dendro_researchers/logout
