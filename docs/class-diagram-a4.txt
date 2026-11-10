@@ -1,145 +1,58 @@
-Диаграмма классов — шахматно, А4 книжный, ничего не пересекается
-================================================================
-Верхняя полоска КАЖДОГО класса: заливка #1c1c1c, шрифт имени БЕЛЫЙ.
-Нижняя полоска: белая, операции или атрибуты чёрным.
-Шрифт 8 pt. Стрелки без подписей и без 1/*.
+Диаграмма классов — срисовывай как образец одногруппника
+=======================================================
+Готовый рисунок: docs/class-diagram.png
+Вставь его в РПЗ как «Рисунок 2 — Диаграмма классов».
+Если нужен StarUML — повтори этот вид один в один.
 
 
-ШАХМАТНАЯ СЕТКА (не ставь всё в один столбец)
+ПАКЕТ «Фронтенд» (вкладка сверху слева пустая, имя пакета по центру)
+Четыре Class, у каждого ТРИ полоски: имя / пусто / пусто.
+Имя в две строки. Операций и атрибутов НЕТ.
 
-Ряд 0. Четыре страницы — классы с ДВУМЯ полосками, 2 клетки × 2 клетки:
+  Страница          Страница             Страница          Страница
+  Лента             Добавление           Плитка            Авторизация
 
-   +------------------+     +------------------+
-   | FeedPage         |     | MosaicPage       |     <- тёмная, белый текст
-   |------------------|     |------------------|
-   | +openFeed()      |     | +openList()      |
-   | +openNext()      |     | +filterByDate()  |
-   +------------------+     +------------------+
-
-   +------------------+     +------------------+
-   | DraftPage        |     | NotFoundPage     |
-   |------------------|     |------------------|
-   | +openDraft()     |     | +showMissing()   |
-   | +submitNext()    |     |                  |
-   | +submitPublish() |     |                  |
-   +------------------+     +------------------+
-
-Страницы чуть левее. Справа от них — клиент и веб-сервис.
+Первая и третья чуть выше, вторая и четвёртая чуть ниже.
 
 
-Ряд 1. Клиент по центру правой половины:
+МЕЖДУ ПАКЕТАМИ — два кружка Interface (lollipop), не прямоугольники:
 
-              +---------+
-              | Postman |
-              +---------+
-                 /   \
-          Usage /     \ Usage
-               v       v
-             ( o )   ( o )
-   API DendroScale   API Dendro
-      Patterns       Researchers
+  API dendro_scale_patterns (o)     (o) API dendro_researchers
 
-Кружок = Provided Interface / lollipop. НЕ класс-прямоугольник.
-Не пиши внутри кружка длинный текст.
+Лента, Добавление, Плитка  ——прямая——>  кружок паттернов
+Авторизация                ——прямая——>  кружок исследователей
+От кружка вниз в свой домен (сплошная).
 
 
-Ряд 2. Домены — два квадрата рядом, не наезжают:
+ПАКЕТ «Бэкенд»
+Два Class с ТРЕМЯ полосками: имя / пустая / методы.
 
-   +---------------------------+  +----------------------+
-   | Домен DendroScalePatterns |  | Домен DendroResearchers
-   |---------------------------|  |----------------------|
-   | +GET  .../patterns        |  | +POST .../register   |
-   | +GET  .../feed            |  | +POST .../login      |
-   | +GET  .../feed/:id        |  | +POST .../logout     |
-   | +GET  .../draft           |  +----------------------+
-   | +POST .../patterns        |
-   | +PUT  .../publish         |
-   | +DELETE .../:id           |
-   | +POST .../:id/like        |
-   +---------------------------+
+Домен dendro_scale_patterns
+  + GET /api/dendro_scale_patterns()
+  + GET /api/dendro_scale_patterns/feed()
+  + GET /api/dendro_scale_patterns/draft()
+  + POST /api/dendro_scale_patterns()
+  + PUT /api/dendro_scale_patterns/publish()
+  + DELETE /api/dendro_scale_patterns/:id()
+  + POST /api/dendro_scale_patterns/:id/like()
 
-От кружка вниз к своему домену: Interface Realization (сплошная, треугольник).
-
-
-Ряд 3. Модели — три квадрата в шахматку, средний чуть ниже,
-чтобы стрелки не пересекались:
-
-   +------------------+          +------------------+
-   | Модель           |          | Модель           |
-   | DendroResearcher |          | DendroPatternLike|
-   |------------------|          |------------------|
-   | id               |          | id               |
-   | login            |          | researcherId     |
-   | password         |          | patternId        |
-   | fullName         |          +------------------+
-   +------------------+
-              +----------------------+
-              | Модель               |
-              | DendroScalePattern   |
-              |----------------------|
-              | id title status      |
-              | imageUrl videoUrl    |
-              | eventYear ringCount  |
-              | creatorId            |
-              +----------------------+
-
-Пунктир Dependency: домен паттернов → Pattern и Like;
-домен исследователей → Researcher.
+Домен dendro_researchers
+  + POST /api/dendro_researchers/register()
+  + POST /api/dendro_researchers/login()
+  + POST /api/dendro_researchers/logout()
 
 
-Ряд 4. Таблицы — три квадрата <<table>>, компактные, как ER:
-
-   +--------------------+     +-------------------------+
-   | dendro_researchers |     | dendro_scale_patterns   |
-   |--------------------|     |-------------------------|
-   | PK id              |     | PK id                   |
-   | login password     |     | title status creator_id |
-   | full_name          |     | image_url NULL          |
-   +--------------------+     | video_url NULL          |
-                              | event_year NULL         |
-                              | ring_count NULL         |
-                              +-------------------------+
-                 +------------------------+
-                 | dendro_pattern_likes   |
-                 |------------------------|
-                 | PK id                  |
-                 | FK researcher_id       |
-                 | FK pattern_id          |
-                 +------------------------+
-
-Пунктир модель → своя таблица. Между таблицами сплошная без 1/*.
+ПАКЕТ «Модель»
+Три Class, три пустые полоски, только имя:
+  DendroScalePattern    DendroPatternLike    DendroResearcher
+Пунктир со стрелкой от домена паттернов к Pattern и Like,
+от домена исследователей к Researcher.
 
 
-КАК УБРАТЬ ПЕРЕСЕЧЕНИЯ
-1. Включи Snap to Grid.
-2. Между рядами пустая полоса высотой с один класс.
-3. Не тяни длинные диагонали через весь лист: сначала вниз, потом вбок
-   (Rectilinear / orthogonal в StarUML).
-4. Страницы только слева, сервис справа. Модели не клади под страницами
-   в ту же клетку.
-
-
-ИНТЕРФЕЙСЫ «НОРМАЛЬНО»
-Toolbox → Interface (кружок) ИЛИ Port + Provided Interface.
-Имя кружка: API DendroScalePatterns / API DendroResearchers.
-Postman  --Usage-->  кружок  --Realization-->  класс домена.
-Не рисуй интерфейс как третий большой класс с методами — методы только
-у домена.
-
-
-ОПЕРАЦИИ ДОМЕНОВ (коротко, полный путь в signature)
-
-Домен DendroScalePatterns
-  GET /api/dendro_scale_patterns
-  GET /api/dendro_scale_patterns/feed
-  GET /api/dendro_scale_patterns/feed/:id
-  GET /api/dendro_scale_patterns/draft
-  POST /api/dendro_scale_patterns
-  PUT /api/dendro_scale_patterns/publish
-  DELETE /api/dendro_scale_patterns/:id
-  POST /api/dendro_scale_patterns/:id/like
-
-Домен DendroResearchers
-  POST /api/dendro_researchers/register
-  POST /api/dendro_researchers/login
-  POST /api/dendro_researchers/logout
+ПАКЕТ «База данных»
+Три простых прямоугольника (без полосок), только имя:
+  dendro_scale_patterns    dendro_pattern_likes    dendro_researchers
+Пунктир модель → таблица.
+Между таблицами сплошные ассоциации:
+  patterns  0..* —— 0..*  likes  0..* —— 1  researchers
+  снизу: patterns  0..* ————— 1  researchers
