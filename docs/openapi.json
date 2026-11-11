@@ -28,7 +28,8 @@
         "description": "Только опубликованные. Признак mine 0/1: создатель паттерна совпадает с текущим исследователем. Без токена mine=0.",
         "parameters": [
           { "name": "date_from", "in": "query", "schema": { "type": "string", "format": "date", "example": "1700-01-01" } },
-          { "name": "date_to", "in": "query", "schema": { "type": "string", "format": "date", "example": "2000-12-31" } }
+          { "name": "date_to", "in": "query", "schema": { "type": "string", "format": "date", "example": "2000-12-31" } },
+          { "name": "title", "in": "query", "schema": { "type": "string", "example": "кольц" } }
         ],
         "responses": { "200": { "description": "массив паттернов, поле mine 0/1" } }
       },

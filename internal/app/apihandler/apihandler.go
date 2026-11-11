@@ -97,7 +97,7 @@ func (a *API) patternDTO(ctx *gin.Context, pattern ds.DendroScalePattern) serial
 }
 
 func (a *API) ListPatterns(ctx *gin.Context) {
-	patterns, err := a.Repo.ListPublished(parseYearFromDate(ctx.Query("date_from")), parseYearFromDate(ctx.Query("date_to")))
+	patterns, err := a.Repo.ListPublished(parseYearFromDate(ctx.Query("date_from")), parseYearFromDate(ctx.Query("date_to")), ctx.Query("title"))
 	if err != nil {
 		log.Println(err)
 		ctx.JSON(http.StatusInternalServerError, serializer.MessageDTO{Message: "ошибка получения списка"})

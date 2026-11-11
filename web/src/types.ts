@@ -12,5 +12,6 @@ export type DendroScalePattern = {
   ringCount: number | null;
   likeCount: number;
   liked: number;
+  mine: number;
   creatorId: number;
 };

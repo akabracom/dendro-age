@@ -76,13 +76,17 @@ func CheckResearcherPassword(researcher ds.DendroResearcher, password string) er
 	return nil
 }
 
-func (r *Repository) ListPublished(yearFrom *int, yearTo *int) ([]ds.DendroScalePattern, error) {
+func (r *Repository) ListPublished(yearFrom *int, yearTo *int, title string) ([]ds.DendroScalePattern, error) {
 	query := r.db.Where("status = ?", ds.StatusPublished)
 	if yearFrom != nil {
 		query = query.Where("event_year >= ?", *yearFrom)
 	}
 	if yearTo != nil {
 		query = query.Where("event_year <= ?", *yearTo)
+	}
+	title = strings.TrimSpace(title)
+	if title != "" {
+		query = query.Where("title ILIKE ?", "%"+title+"%")
 	}
 	var patterns []ds.DendroScalePattern
 	err := query.Order("id asc").Find(&patterns).Error

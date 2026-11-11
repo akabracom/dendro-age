@@ -83,7 +83,7 @@ func (h *Handler) renderNotFound(ctx *gin.Context) {
 func (h *Handler) GetDendroScalePatterns(ctx *gin.Context) {
 	dateFromRaw := ctx.Query("date_from")
 	dateToRaw := ctx.Query("date_to")
-	patterns, err := h.Repository.ListPublished(parseYearFromDate(dateFromRaw), parseYearFromDate(dateToRaw))
+	patterns, err := h.Repository.ListPublished(parseYearFromDate(dateFromRaw), parseYearFromDate(dateToRaw), ctx.Query("title"))
 	if err != nil {
 		log.Println(err)
 		ctx.Status(http.StatusInternalServerError)

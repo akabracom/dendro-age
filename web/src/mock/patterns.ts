@@ -16,6 +16,7 @@ export const mockPatterns: DendroScalePattern[] = [
     ringCount: 4,
     likeCount: 3,
     liked: 0,
+    mine: 0,
     creatorId: 1,
   },
   {
@@ -30,6 +31,7 @@ export const mockPatterns: DendroScalePattern[] = [
     ringCount: 7,
     likeCount: 1,
     liked: 0,
+    mine: 0,
     creatorId: 2,
   },
   {
@@ -44,6 +46,7 @@ export const mockPatterns: DendroScalePattern[] = [
     ringCount: 5,
     likeCount: 6,
     liked: 0,
+    mine: 0,
     creatorId: 1,
   },
   {
@@ -58,6 +61,7 @@ export const mockPatterns: DendroScalePattern[] = [
     ringCount: null,
     likeCount: 0,
     liked: 0,
+    mine: 0,
     creatorId: 1,
   },
 ];

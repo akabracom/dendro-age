@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppNavbar } from "./components/AppNavbar";
+import { BusyOverlay } from "./components/BusyOverlay";
+import { AddPage } from "./pages/AddPage";
 import { FeedPage } from "./pages/FeedPage";
-import { LockedPage } from "./pages/LockedPage";
+import { LoginPage } from "./pages/LoginPage";
 import { MosaicPage } from "./pages/MosaicPage";
 
 function App() {
@@ -12,10 +14,11 @@ function App() {
         <Route path="/feed" element={<FeedPage />} />
         <Route path="/feed/:id" element={<FeedPage />} />
         <Route path="/mosaic" element={<MosaicPage />} />
-        <Route path="/add" element={<LockedPage title="Добавление" />} />
-        <Route path="/login" element={<LockedPage title="Вход" />} />
+        <Route path="/add" element={<AddPage />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
       <AppNavbar />
+      <BusyOverlay />
     </div>
   );
 }

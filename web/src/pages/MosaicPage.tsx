@@ -1,62 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { PatternCard } from "../components/PatternCard";
 import { PatternFilter } from "../components/PatternFilter";
-import { mockPatterns, publishedPatterns } from "../mock/patterns";
-import type { DendroScalePattern } from "../types";
-
-function yearFromDate(raw: string): number | null {
-  if (!raw) {
-    return null;
-  }
-  const parsed = new Date(raw + "T00:00:00");
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-  return parsed.getFullYear();
-}
-
-function applyFilter(
-  items: DendroScalePattern[],
-  dateFrom: string,
-  dateTo: string,
-  titleQuery: string,
-): DendroScalePattern[] {
-  const fromYear = yearFromDate(dateFrom);
-  const toYear = yearFromDate(dateTo);
-  const title = titleQuery.trim().toLowerCase();
-  return items.filter((item) => {
-    if (item.eventYear === null) {
-      return false;
-    }
-    if (fromYear !== null && item.eventYear < fromYear) {
-      return false;
-    }
-    if (toYear !== null && item.eventYear > toYear) {
-      return false;
-    }
-    if (title && !item.title.toLowerCase().includes(title)) {
-      return false;
-    }
-    return true;
-  });
-}
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { setDateFrom, setDateTo, setTitle } from "../store/filterSlice";
+import { deleteDendroScalePattern, fetchDendroScalePatterns } from "../store/patternSlice";
 
 export function MosaicPage() {
-  const [allPublished, setAllPublished] = useState<DendroScalePattern[]>([]);
-  const [visible, setVisible] = useState<DendroScalePattern[]>([]);
-  const [dateFrom, setDateFrom] = useState("1700-01-01");
-  const [dateTo, setDateTo] = useState("2000-12-31");
-  const [titleQuery, setTitleQuery] = useState("");
+  const dispatch = useAppDispatch();
+  const filter = useAppSelector((state) => state.filter);
+  const list = useAppSelector((state) => state.patterns.list);
+  const error = useAppSelector((state) => state.patterns.error);
+  const source = useAppSelector((state) => state.patterns.source);
 
   useEffect(() => {
-    const loaded = publishedPatterns(mockPatterns);
-    setAllPublished(loaded);
-    setVisible(applyFilter(loaded, "1700-01-01", "2000-12-31", ""));
-  }, []);
-
-  function handleApply() {
-    setVisible(applyFilter(allPublished, dateFrom, dateTo, titleQuery));
-  }
+    void dispatch(fetchDendroScalePatterns());
+  }, [dispatch]);
 
   return (
     <main className="page page--mosaic">
@@ -64,19 +22,25 @@ export function MosaicPage() {
         <h1 className="topbar__title">Аномальные паттерны</h1>
       </header>
       <PatternFilter
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        titleQuery={titleQuery}
-        onDateFromChange={setDateFrom}
-        onDateToChange={setDateTo}
-        onTitleQueryChange={setTitleQuery}
-        onApply={handleApply}
+        dateFrom={filter.dateFrom}
+        dateTo={filter.dateTo}
+        titleQuery={filter.title}
+        onDateFromChange={(value) => dispatch(setDateFrom(value))}
+        onDateToChange={(value) => dispatch(setDateTo(value))}
+        onTitleQueryChange={(value) => dispatch(setTitle(value))}
+        onApply={() => void dispatch(fetchDendroScalePatterns())}
       />
+      {source === "mock" ? <p className="source-note">Сервис недоступен, показаны mock-паттерны гостя.</p> : null}
+      {error ? <p className="source-note">{error}</p> : null}
       <section className="mosaic-grid">
-        {visible.map((pattern) => (
-          <PatternCard key={pattern.id} pattern={pattern} />
+        {list.map((pattern) => (
+          <PatternCard
+            key={pattern.id}
+            pattern={pattern}
+            onDelete={(id) => void dispatch(deleteDendroScalePattern(id))}
+          />
         ))}
-        {visible.length === 0 ? <p className="mosaic-empty">Нет паттернов за выбранные условия.</p> : null}
+        {list.length === 0 ? <p className="mosaic-empty">Нет паттернов за выбранные условия.</p> : null}
       </section>
     </main>
   );

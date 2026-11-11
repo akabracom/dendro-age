@@ -1,49 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
-import { DEFAULT_IMAGE, DEFAULT_VIDEO, mockPatterns, publishedPatterns, resolveMedia } from "../mock/patterns";
-import type { DendroScalePattern } from "../types";
+import { DEFAULT_IMAGE, DEFAULT_VIDEO } from "../mock/patterns";
+import { proxyMedia } from "../api/media";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { fetchDendroScalePatternFeed, likeDendroScalePattern } from "../store/patternSlice";
 
 export function FeedPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [items, setItems] = useState<DendroScalePattern[]>([]);
-  const [index, setIndex] = useState(0);
+  const dispatch = useAppDispatch();
+  const feed = useAppSelector((state) => state.patterns.feed);
+  const error = useAppSelector((state) => state.patterns.error);
+  const isUser = useAppSelector((state) => state.auth.status === "user");
 
   useEffect(() => {
-    setItems(publishedPatterns(mockPatterns));
-  }, []);
+    void dispatch(fetchDendroScalePatternFeed());
+  }, [dispatch]);
 
-  useEffect(() => {
-    if (items.length === 0) {
-      return;
-    }
-    if (!id) {
-      setIndex(0);
-      return;
-    }
-    const found = items.findIndex((item) => item.id === Number(id));
-    setIndex(found >= 0 ? found : 0);
-  }, [id, items]);
-
-  if (items.length === 0) {
+  if (!feed) {
     return (
       <main className="page page--feed">
-        <p className="feed-empty">Нет опубликованных паттернов.</p>
+        <p className="feed-empty">{error || "Нет опубликованных паттернов."}</p>
       </main>
     );
   }
 
-  const pattern = items[index];
-  const imageSrc = resolveMedia(pattern.imageUrl, DEFAULT_IMAGE);
-  const videoSrc = resolveMedia(pattern.videoUrl, DEFAULT_VIDEO);
-  const year = pattern.eventYear === null ? "—" : String(pattern.eventYear);
-  const rings = pattern.ringCount === null ? "—" : String(pattern.ringCount);
-
-  function handleNext() {
-    const nextIndex = (index + 1) % items.length;
-    navigate("/feed/" + String(items[nextIndex].id));
-  }
+  const imageSrc = proxyMedia(feed.imageUrl, DEFAULT_IMAGE);
+  const videoSrc = proxyMedia(feed.videoUrl, DEFAULT_VIDEO);
+  const year = feed.eventYear === null ? "—" : String(feed.eventYear);
+  const rings = feed.ringCount === null ? "—" : String(feed.ringCount);
 
   return (
     <main className="page page--feed">
@@ -61,20 +44,33 @@ export function FeedPage() {
           </div>
           <div>
             <span className="feed__label">Лайки</span>
-            <strong>{pattern.likeCount}</strong>
+            <strong>{feed.likeCount}</strong>
           </div>
           <div>
             <span className="feed__label">Мой лайк</span>
-            <strong>{pattern.liked}</strong>
+            <strong>{feed.liked}</strong>
           </div>
-          <Button className="feed__next" onClick={handleNext}>
+          {isUser ? (
+            <Button
+              className="feed__next"
+              type="button"
+              onClick={() => void dispatch(likeDendroScalePattern({ id: feed.id, like: feed.liked === 1 ? 0 : 1 }))}
+            >
+              Лайк
+            </Button>
+          ) : null}
+          <Button
+            className="feed__next"
+            type="button"
+            onClick={() => void dispatch(fetchDendroScalePatternFeed({ id: feed.id, next: true }))}
+          >
             Следующий
           </Button>
         </aside>
         <div className="feed__bottom">
-          <h1>{pattern.title}</h1>
-          <p>{pattern.shortDescription}</p>
-          <p className="feed__full">{pattern.fullDescription}</p>
+          <h1>{feed.title}</h1>
+          <p>{feed.shortDescription}</p>
+          <p className="feed__full">{feed.fullDescription}</p>
         </div>
       </div>
     </main>
