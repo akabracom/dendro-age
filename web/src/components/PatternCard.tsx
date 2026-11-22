@@ -14,8 +14,8 @@ export function PatternCard({ pattern, onDelete }: PatternCardProps) {
   const year = pattern.eventYear === null ? "—" : String(pattern.eventYear);
 
   return (
-    <Card className="pattern-card">
-      <Link to={"/feed/" + String(pattern.id)} className="pattern-card__link">
+    <Card className="pattern-card card_item">
+      <Link to={"/pattern/" + String(pattern.id)} className="pattern-card__link">
         <Card.Img src={imageSrc} alt={pattern.title} className="pattern-card__image" />
         <Card.ImgOverlay className="pattern-card__shade">
           <Card.Title>{pattern.title}</Card.Title>
@@ -23,6 +23,7 @@ export function PatternCard({ pattern, onDelete }: PatternCardProps) {
             ♥ {pattern.likeCount} · {year}
             {pattern.mine === 1 ? " · моя" : ""}
           </Card.Text>
+          <Card.Text className="pattern-card__more">Подробнее</Card.Text>
         </Card.ImgOverlay>
       </Link>
       {pattern.mine === 1 && onDelete ? (

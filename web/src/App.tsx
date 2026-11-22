@@ -5,6 +5,7 @@ import { AddPage } from "./pages/AddPage";
 import { FeedPage } from "./pages/FeedPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MosaicPage } from "./pages/MosaicPage";
+import { PatternDetailsPage } from "./pages/PatternDetailsPage";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/feed" element={<FeedPage />} />
         <Route path="/feed/:id" element={<FeedPage />} />
         <Route path="/mosaic" element={<MosaicPage />} />
+        <Route path="/pattern/:id" element={<PatternDetailsPage />} />
         <Route path="/add" element={<AddPage />} />
         <Route path="/login" element={<LoginPage />} />
       </Routes>

@@ -1,8 +1,25 @@
+import { copyFileSync, writeFileSync } from "node:fs";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+function pagesFallback() {
+  return {
+    name: "pages-fallback",
+    apply: "build" as const,
+    closeBundle() {
+      copyFileSync("dist/index.html", "dist/404.html");
+      writeFileSync("dist/.nojekyll", "");
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  base: "/dendro-age/",
+  plugins: [react(), pagesFallback()],
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+  },
   server: {
     proxy: {
       "/api": {

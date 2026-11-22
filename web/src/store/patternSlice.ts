@@ -97,6 +97,10 @@ function mockList(dateFrom: string, dateTo: string, title: string) {
   });
 }
 
+function onGitHubPages() {
+  return window.location.hostname.endsWith("github.io");
+}
+
 function yearOf(raw: string) {
   if (!raw) {
     return null;
@@ -112,6 +116,9 @@ export const fetchDendroScalePatterns = createAsyncThunk(
   "patterns/fetchDendroScalePatterns",
   async (_, { getState, rejectWithValue }) => {
     const filter = (getState() as PatternLookup).filter;
+    if (onGitHubPages()) {
+      return { list: mockList(filter.dateFrom, filter.dateTo, filter.title), mock: true as const };
+    }
     try {
       const response = await dendroScalePatterns.getDendroScalePatterns({
         date_from: filter.dateFrom,
@@ -132,6 +139,14 @@ export const fetchDendroScalePatternFeed = createAsyncThunk(
   "patterns/fetchDendroScalePatternFeed",
   async (arg: { id?: number; next?: boolean } | undefined, { getState, rejectWithValue }) => {
     const state = getState() as PatternLookup;
+    if (onGitHubPages()) {
+      const list = state.patterns.list.length > 0 ? state.patterns.list : publishedPatterns(mockPatterns);
+      if (arg?.next && list.length > 0) {
+        const index = list.findIndex((item) => item.id === state.patterns.feed?.id);
+        return { pattern: list[(index + 1) % list.length], mock: true as const };
+      }
+      return { pattern: list[0] ?? null, list, mock: true as const };
+    }
     if (state.patterns.source === "mock" && arg?.next) {
       const items = state.patterns.list;
       const index = items.findIndex((item) => item.id === state.patterns.feed?.id);

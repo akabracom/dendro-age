@@ -11,3 +11,5 @@ tmp/
 Thumbs.db
 .idea/
 .vscode/
+proxy/node_modules/
+proxy/certs/

@@ -25,7 +25,7 @@ body,
 }
 
 .phone {
-  width: 390px;
+  width: 100%;
   min-height: 100vh;
   margin: 0 auto;
   background: var(--color-bg);
@@ -84,11 +84,40 @@ body,
   background: var(--color-green-hover) !important;
 }
 
-.mosaic-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+.cards__wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
   padding: 14px 16px;
+}
+
+.card_item {
+  flex: 1 1 300px;
+  max-width: 100%;
+  height: 216px;
+}
+
+@media (max-width: 639px) {
+  .card_item {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 959px) {
+  .card_item {
+    flex: 1 1 calc(50% - 20px);
+    max-width: calc(50% - 10px);
+  }
+}
+
+@media (min-width: 960px) {
+  .card_item {
+    flex: 1 1 calc(33.333% - 20px);
+    max-width: calc(33.333% - 14px);
+  }
 }
 
 .pattern-card {
@@ -118,7 +147,7 @@ body,
 }
 
 .mosaic-empty {
-  grid-column: 1 / -1;
+  flex: 1 1 100%;
   color: var(--color-muted);
 }
 
@@ -201,10 +230,11 @@ body,
 
 .tabbar {
   position: fixed;
-  left: 50%;
+  left: 12px;
+  right: 12px;
   bottom: 16px;
-  width: 358px;
-  margin-left: -179px;
+  width: min(720px, calc(100% - 24px));
+  margin: 0 auto;
   background: #f7f7f7;
   border-radius: 36px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -277,6 +307,62 @@ body,
 
 .pattern-card {
   position: relative;
+}
+
+.pattern-card__more {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px 24px;
+}
+
+.details__image,
+.details__video {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: 16px;
+  background: #111;
+}
+
+.details h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.details__back {
+  align-self: flex-start;
+  background: var(--color-green);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 14px;
+  padding: 8px 14px;
+}
+
+@media (min-width: 700px) {
+  .feed__bottom {
+    left: 48px;
+    bottom: 120px;
+  }
+
+  .feed__bottom h1 {
+    font-size: 28px;
+  }
+
+  .feed__rail {
+    right: 32px;
+  }
+
+  .stack-form,
+  .details {
+    max-width: 560px;
+  }
 }
 
 .pattern-card__delete {

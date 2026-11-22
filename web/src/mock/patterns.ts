@@ -1,7 +1,11 @@
 import type { DendroScalePattern } from "../types";
 
-export const DEFAULT_IMAGE = "/defaults/pattern_default.svg";
-export const DEFAULT_VIDEO = "/defaults/pattern_default.mp4";
+function publicAsset(path: string) {
+  return import.meta.env.BASE_URL + path.replace(/^\//, "");
+}
+
+export const DEFAULT_IMAGE = publicAsset("defaults/pattern_default.svg");
+export const DEFAULT_VIDEO = publicAsset("defaults/pattern_default.mp4");
 
 export const mockPatterns: DendroScalePattern[] = [
   {

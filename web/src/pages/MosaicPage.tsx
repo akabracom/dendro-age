@@ -30,9 +30,15 @@ export function MosaicPage() {
         onTitleQueryChange={(value) => dispatch(setTitle(value))}
         onApply={() => void dispatch(fetchDendroScalePatterns())}
       />
-      {source === "mock" ? <p className="source-note">Сервис недоступен, показаны mock-паттерны гостя.</p> : null}
+      {source === "mock" ? (
+        <p className="source-note">
+          {window.location.hostname.endsWith("github.io")
+            ? "GitHub Pages: показаны mock-паттерны."
+            : "Сервис недоступен, показаны mock-паттерны гостя."}
+        </p>
+      ) : null}
       {error ? <p className="source-note">{error}</p> : null}
-      <section className="mosaic-grid">
+      <section className="mosaic-grid cards__wrapper">
         {list.map((pattern) => (
           <PatternCard
             key={pattern.id}
