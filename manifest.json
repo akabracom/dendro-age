@@ -1,0 +1,22 @@
+{
+  "name": "Dendro Age",
+  "short_name": "Dendro Age",
+  "start_url": "/dendro-age/",
+  "scope": "/dendro-age/",
+  "display": "standalone",
+  "background_color": "#efefef",
+  "theme_color": "#465729",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/dendro-age/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/dendro-age/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
